@@ -181,7 +181,7 @@ export default function Dashboard() {
     const load = () => fetch(`/api/dashboard?account=${id}`, { cache: "no-store" }).then((r) => { if (!r.ok) throw new Error(); return r.json(); })
       .then((d) => { if (live) { setData(d); setError(""); } }).catch(() => live && setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้"));
     load();
-    const t = setInterval(load, 10000);
+    const t = setInterval(load, 3000);
     return () => { live = false; clearInterval(t); };
   }, [id]);
 
@@ -291,7 +291,7 @@ export default function Dashboard() {
         <select aria-label="เลือกบัญชี" value={id} onChange={(e) => setId(e.target.value)}>
           {accounts.map((a) => <option key={a.id} value={a.id}>{a.login} · {a.company || a.server}{a.is_demo ? " (Demo)" : ""}</option>)}
         </select>
-        <span>Server Time : {state?.server_time?.replaceAll("-", ".") ?? "-"}</span>{error && <span className="neg">{error}</span>}</footer>
+        <span>Server Time : {state?.server_time?.replaceAll("-", ".") ?? "-"}</span><span className={state && state.age > 30 ? "neg" : ""}>Updated : {state ? `${state.age}s ago` : "-"}</span>{error && <span className="neg">{error}</span>}</footer>
     </div>
   );
 }
