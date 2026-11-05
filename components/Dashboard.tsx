@@ -204,10 +204,10 @@ export default function Dashboard() {
 
   const logout = () => fetch("/api/login", { method: "DELETE" }).then((r) => { if (!r.ok) throw new Error(); location.href = "/login"; }).catch(() => setError("ออกจากระบบไม่สำเร็จ"));
 
-  if (!loaded) return <main className="empty">{error || "กำลังโหลด..."}</main>;
+  if (!loaded) return <main className="empty">{error || "Loading...."}</main>;
   if (error && !data) return <main className="empty">{error}</main>;
   if (!accounts.length) return <main className="empty">ยังไม่มีบัญชีส่งข้อมูลเข้ามา เปิด TrendX Cloud Bridge ใน MT5 ก่อน</main>;
-  if (!data?.account) return <main className="empty">กำลังโหลด...</main>;
+  if (!data?.account) return <main className="empty">Loading....</main>;
 
   const { account, state, last30 } = data;
   const ea = state?.ea_state;
