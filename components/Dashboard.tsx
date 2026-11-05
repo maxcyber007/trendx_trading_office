@@ -159,26 +159,33 @@ export default function Dashboard() {
   const [id, setId] = useState("");
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState("");
+  const [loaded, setLoaded] = useState(false);
 
+  // a failed load is retried; only a successful empty list means no account has reported yet
   useEffect(() => {
-    fetch("/api/accounts").then((r) => r.json()).then((a: Account[]) => {
-      setAccounts(a);
+    let live = true, timer: ReturnType<typeof setTimeout>;
+    const load = () => fetch("/api/accounts", { cache: "no-store" }).then((r) => { if (!r.ok) throw new Error(); return r.json(); }).then((a: Account[]) => {
+      if (!live) return;
+      setAccounts(a); setLoaded(true); setError("");
       const saved = localStorage.getItem("trendx_account");
       setId(a.some((x) => x.id === saved) ? saved! : a[0]?.id ?? "");
-    }).catch(() => setError("โหลดรายชื่อบัญชีไม่ได้"));
+    }).catch(() => { if (live) { setError("กำลังเชื่อมต่อฐานข้อมูลใหม่..."); timer = setTimeout(load, 3000); } });
+    load();
+    return () => { live = false; clearTimeout(timer); };
   }, []);
 
   useEffect(() => {
     if (!id) return;
     localStorage.setItem("trendx_account", id);
     let live = true;
-    const load = () => fetch(`/api/dashboard?account=${id}`).then((r) => r.json())
+    const load = () => fetch(`/api/dashboard?account=${id}`, { cache: "no-store" }).then((r) => { if (!r.ok) throw new Error(); return r.json(); })
       .then((d) => { if (live) { setData(d); setError(""); } }).catch(() => live && setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้"));
     load();
     const t = setInterval(load, 10000);
     return () => { live = false; clearInterval(t); };
   }, [id]);
 
+  if (!loaded) return <main className="empty">{error || "กำลังโหลด..."}</main>;
   if (error && !data) return <main className="empty">{error}</main>;
   if (!accounts.length) return <main className="empty">ยังไม่มีบัญชีส่งข้อมูลเข้ามา เปิด TrendX Cloud Bridge ใน MT5 ก่อน</main>;
   if (!data?.account) return <main className="empty">กำลังโหลด...</main>;

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { read } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 // closed-trade result of a deal row; deposits and withdrawals (types 2, 3) are not trading results
@@ -9,8 +9,9 @@ const TRADE = "deal_type IN (0,1) AND entry IN (1,2,3)";
 export async function GET(req: NextRequest) {
   const id = Number(req.nextUrl.searchParams.get("account"));
   if (!id) return NextResponse.json({ error: "account required" }, { status: 400 });
-  const q = (sql: string) => db().query(sql, [id]).then((r) => r.rows);
+  const q = (sql: string) => read<Record<string, any>>(sql, [id]);
 
+  try {
   const [acc, state, totals, recent30, daily, monthly, ranking, dd, marks] = await Promise.all([
     q(`SELECT id,login,server,company,currency,is_demo,name FROM accounts WHERE id=$1`),
     q(`SELECT balance::float, equity::float, margin::float, to_char(server_time,'YYYY-MM-DD HH24:MI:SS') server_time, ea_alive, ea_state, positions, market,
@@ -35,4 +36,8 @@ export async function GET(req: NextRequest) {
   ]);
   if (!acc.length) return NextResponse.json({ error: "not found" }, { status: 404 });
   return NextResponse.json({ account: acc[0], state: state[0] ?? null, totals: totals[0], last30: recent30[0], daily, monthly, ranking, dd: dd[0], marks });
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({ error: "database unavailable" }, { status: 503 });
+  }
 }
