@@ -220,21 +220,15 @@ tbody tr { animation: rowIn .45s ease-out .35s backwards; } .top1 { animation: r
 @keyframes outPulse { 50% { filter: drop-shadow(0 0 7px currentColor); } }
 @keyframes boostGlow { 50% { filter: drop-shadow(0 0 4px var(--yellow)); } }
 @keyframes stopGlow { 50% { filter: drop-shadow(0 0 5px var(--red)); } }
-/* left panel: neon green light behind translucent cards, moving slowly so the figures stay readable */
-.left { position: relative; isolation: isolate; background-color: #03130a; background-image: radial-gradient(circle at 18% 12%, rgba(57, 255, 106, .3), transparent 34%), radial-gradient(circle at 88% 42%, rgba(0, 255, 136, .22), transparent 36%), radial-gradient(circle at 34% 88%, rgba(0, 200, 83, .34), transparent 42%), linear-gradient(145deg, #042614, #03130a 50%, #063018); background-size: 140% 140%, 150% 150%, 150% 150%, 100% 100%; animation: panelGlow 5s ease-in-out infinite, neonDrift 13s ease-in-out infinite alternate; }
-.left::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: repeating-linear-gradient(115deg, transparent 0 34px, rgba(57, 255, 106, .05) 34px 35px); animation: fadeBlink 4s ease-in-out infinite; }
-.left .card, .left .chip { position: relative; overflow: hidden; background: rgba(4, 18, 11, .76); border-color: rgba(57, 255, 106, .46); }
+/* left panel: light running along the card edges */
+.left { animation: panelGlow 5s ease-in-out infinite; }
+.left .card, .left .chip { position: relative; overflow: hidden; }
 .left .card::after, .left .chip::after { content: ""; position: absolute; left: -35%; top: 0; width: 35%; height: 1px; pointer-events: none; background: linear-gradient(90deg, transparent, var(--neon), transparent); box-shadow: 0 0 8px var(--neon); animation: edgeRun 4.5s linear infinite; }
 .left .card:nth-child(2n)::after, .left .chip:nth-child(2n)::after { animation-delay: 1.2s; } .left .card:nth-child(3n)::after, .left .chip:nth-child(3n)::after { animation-delay: 2.2s; }
 .stat strong, .dd strong { animation: figureGlow 3.2s ease-in-out infinite; }
 .ring .fill { filter: drop-shadow(0 0 4px var(--neon)); }
-.monthly { background-color: rgba(4, 28, 15, .82); }
-.monthly::before { content: ""; position: absolute; left: -20%; right: -20%; bottom: -44px; height: 92px; pointer-events: none; background: radial-gradient(ellipse at center, rgba(57, 255, 106, .32), transparent 68%); animation: waveDrift 4.5s ease-in-out infinite alternate; }
-.monthly > * { position: relative; }
-@keyframes neonDrift { from { background-position: 0% 0%, 100% 40%, 20% 100%, 0 0; } to { background-position: 40% 18%, 58% 72%, 62% 76%, 0 0; } }
 @keyframes edgeRun { to { left: 110%; } }
 @keyframes figureGlow { 50% { text-shadow: 0 0 9px rgba(57, 255, 106, .5); } }
-@keyframes waveDrift { from { transform: translateX(-8%) scaleY(.9); opacity: .55; } to { transform: translateX(8%) scaleY(1.12); opacity: 1; } }
 @keyframes barRise { from { transform: scaleY(0); opacity: .2; } to { transform: scaleY(1); opacity: 1; } }
 @keyframes barFlow { to { background-position: 0 -240%; } }
 @keyframes curPulse { 50% { box-shadow: 0 0 14px rgba(57, 255, 106, .55), inset 0 0 12px rgba(57, 255, 106, .16); } }
