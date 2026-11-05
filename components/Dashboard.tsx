@@ -112,14 +112,17 @@ function Live({ market, marks }: { market: Market | null | undefined; marks: Dat
   const hour = (t: number) => `${String(new Date(t * 1000).getUTCHours()).padStart(2, "0")}:00`;
   const levels = [0, 1, 2, 3].map((i) => hi - ((hi - lo) * i) / 3);
   const seen = marks.filter((m) => Number(m.t) >= c[0][0] && Number(m.t) <= last[0] + 3600);
+  const lastX = (c.length - 1) * w + w / 2, trail = c.map((k, i) => `${i * w + w / 2},${Y(k[4])}`).join(" ");
   return (
     <section className="card">
-      <header><h2><span className="dot" />LIVE <small>{market.symbol} H1</small></h2><b className={`px ${up ? "pos" : "neg"}`}>{last[4].toFixed(2)}<small className={up ? "pos" : "neg"}>{change >= 0 ? "+" : ""}{change.toFixed(2)}% bar</small></b></header>
+      <header><h2><span className="dot" />LIVE <small>{market.symbol} H1</small></h2><b key={last[4]} className={`px tick ${up ? "pos" : "neg"}`}>{last[4].toFixed(2)}<small className={up ? "pos" : "neg"}>{change >= 0 ? "+" : ""}{change.toFixed(2)}% bar</small></b></header>
       <svg className="candles" viewBox="0 0 330 128" role="img" aria-label="H1 price chart">
         <line className="pxl" x1="0" x2={X} y1={Y(last[4])} y2={Y(last[4])} />
         {c.map((k, i) => { const u = k[4] >= k[1], x = i * w + w / 2; return (
-          <g key={k[0]} className={u ? "cu" : "cd"} style={{ "--i": i } as React.CSSProperties}><line x1={x} x2={x} y1={Y(k[2])} y2={Y(k[3])} /><rect x={x - w * 0.32} y={Math.min(Y(k[1]), Y(k[4]))} width={w * 0.64} height={Math.max(1, Math.abs(Y(k[1]) - Y(k[4])))} /></g>); })}
+          <g key={k[0]} className={`${u ? "cu" : "cd"} ${i === c.length - 1 ? "lastc" : ""}`} style={{ "--i": i } as React.CSSProperties}><line x1={x} x2={x} y1={Y(k[2])} y2={Y(k[3])} /><rect x={x - w * 0.32} y={Math.min(Y(k[1]), Y(k[4]))} width={w * 0.64} height={Math.max(1, Math.abs(Y(k[1]) - Y(k[4])))} /></g>); })}
+        <polyline className="trail" pathLength={100} points={trail} />
         {seen.map((m, i) => { const x = Math.floor((Number(m.t) - c[0][0]) / 3600) * w + w / 2, y = Y(m.price); return <path key={i} className={m.deal_type === 0 ? "mkb" : "mks"} d={m.deal_type === 0 ? `M${x - 3} ${y + 5}h6l-3 -5z` : `M${x - 3} ${y - 5}h6l-3 5z`} />; })}
+        <circle className="ping" cx={lastX} cy={Y(last[4])} r="2.5" /><circle className="ping two" cx={lastX} cy={Y(last[4])} r="2.5" />
         {levels.map((p) => <text key={p} x="326" y={Y(p) + 3} textAnchor="end">{p.toFixed(2)}</text>)}
         <rect className={up ? "tagu" : "tagd"} x="276" y={Y(last[4]) - 6} width="50" height="12" rx="2" /><text className="tagp" x="301" y={Y(last[4]) + 3} textAnchor="middle">{last[4].toFixed(2)}</text>
         <text x="0" y="126">{stamp(c[0][0])}</text><text x={X - 2} y="126" textAnchor="end">{hour(last[0])}</text>
@@ -137,7 +140,7 @@ function NewsPanel({ news, filter }: { news: News[] | undefined; filter?: boolea
       <header><h2><CalIcon /> ECONOMIC NEWS</h2><span className="flt">FILTER {filter ? "ON" : "OFF"}<i className={filter ? "on" : ""} /></span></header>
       <div className="scroll"><table>
         <thead><tr><th>TIME</th><th>CUR</th><th>EVENT</th><th className="rt">ACT / FCST</th></tr></thead>
-        <tbody>{news?.length ? news.map((n) => <tr key={`${n.t}${n.name}`}><td className="pos b">{time(n.t)}</td><td className="code">{n.cur} <span className="imp"><u /><u /><u /></span></td><td className="wrap-text">{n.name}</td><td className="rt">{n.act || n.fc ? `${n.act || "-"} / ${n.fc || "-"}` : ""}</td></tr>)
+        <tbody>{news?.length ? news.map((n) => <tr key={`${n.t}${n.name}`} className={n === next ? "next" : ""}><td className="pos b">{time(n.t)}</td><td className="code">{n.cur} <span className="imp"><u /><u /><u /></span></td><td className="wrap-text">{n.name}</td><td className="rt">{n.act || n.fc ? `${n.act || "-"} / ${n.fc || "-"}` : ""}</td></tr>)
           : <tr><td colSpan={4} className="none">วันนี้ไม่มีข่าวสำคัญ</td></tr>}</tbody>
       </table></div>
       <p className="note">{next ? `next in ${Math.floor(left / 3600)}h ${Math.floor((left % 3600) / 60)}m   ` : ""}times in GMT+7</p>
@@ -149,10 +152,14 @@ function Meter({ label, value, pct, color = "" }: { label: string; value: string
   return <div className="meter2"><div><small>{label}</small><b>{value}</b></div><i><span className={color} style={{ width: `${Math.min(100, Math.max(1, pct))}%` }} /></i></div>;
 }
 
-function Monitor({ sys }: { sys?: Sys }) {
+const BEAT = "l3-3 3 3h4l2 4 3-13 3 13 2-4h5l4-3 4 3H";
+
+function Monitor({ sys, alive }: { sys?: Sys; alive: boolean }) {
   return (
     <section className="card">
-      <header><h2><Pulse /> SYSTEM MONITOR</h2><span className={`pill ${sys?.anim ? "" : "off"}`}>ANIMATION {sys?.anim ? "ON" : "OFF"}</span></header>
+      <header><h2><Pulse /> SYSTEM MONITOR</h2>
+        {alive && <svg className="ecg" viewBox="0 0 80 18" preserveAspectRatio="xMinYMid slice" aria-hidden="true"><g><path d={`M0 10H22${BEAT}80H102${BEAT}160`} /></g></svg>}
+        <span className={`pill ${sys?.anim ? "" : "off"}`}>ANIMATION {sys?.anim ? "ON" : "OFF"}</span></header>
       {sys ? <>
         <Meter label={`DASHBOARD CPU  (1 core / all ${sys.cores})`} value={`${sys.cpu.toFixed(1)}%  /  ${(sys.cpu / Math.max(1, sys.cores)).toFixed(2)}%`} pct={sys.cpu} />
         <Meter label="FRAME TIME  (avg / peak)" value={`${sys.frame.toFixed(1)} / ${sys.peak.toFixed(1)} ms`} pct={sys.frame} />
@@ -285,7 +292,7 @@ export default function Dashboard() {
               <thead><tr><th>RANK</th><th>MODEL</th><th>TRADES</th><th>WIN</th><th /><th className="rt">P/L</th></tr></thead>
               <tbody>{data.ranking.length ? data.ranking.map((r, i) => {
                 const st = states.get(r.model) ?? 0;
-                return <tr key={r.model} className={i === 0 ? "top1" : ""}><td><span className={`rank r${i + 1}`}>{i + 1}</span></td><td className="code">{modelCode(r.model)}{st !== 0 && <em className={st > 0 ? "tagy" : "tagr"}>{st > 0 ? "x2" : "STOP"}</em>}</td>
+                return <tr key={r.model} className={i === 0 ? "top1" : ""} style={{ "--i": i } as React.CSSProperties}><td><span className={`rank r${i + 1}`}>{i + 1}</span></td><td className="code">{modelCode(r.model)}{st !== 0 && <em className={st > 0 ? "tagy" : "tagr"}>{st > 0 ? "x2" : "STOP"}</em>}</td>
                   <td>{r.trades}</td><td>{Math.round((r.wins / r.trades) * 100)}%</td>
                   <td className="bar"><span className={r.pl >= 0 ? "up" : "down"} style={{ width: `${(Math.abs(r.pl) / peakPl) * 100}%` }} /></td><td className={`rt ${sign(r.pl)}`}>{money(r.pl, true)}</td></tr>;
               }) : <tr><td colSpan={6} className="none">ยังไม่มีไม้ที่ปิดแล้ว</td></tr>}</tbody>
@@ -293,7 +300,7 @@ export default function Dashboard() {
           </section>
           <Live market={state?.market} marks={data.marks ?? []} />
           <NewsPanel news={state?.market?.news} filter={ea?.news_filter} />
-          <Monitor sys={ea?.sys} />
+          <Monitor sys={ea?.sys} alive={eaOn} />
           <section className="card dev"><span className="avatar"><Person /></span><div><small>DEVELOPED BY</small><b>ANUCHAT &nbsp;RUNGSIYANON</b><span>rungsiyanon@gmail.com</span></div></section>
         </div>
       </main>
