@@ -16,7 +16,7 @@ type Data = {
   state: { balance: number; equity: number; server_time: string; ea_alive: boolean; age: number; positions: Position[]; market: Market | null; ea_state: EaState | null } | null;
   last30: { trades: number; wins: number; losses: number };
   daily: { d: string; pl: number; n: number }[];
-  monthly: { m: string; pl: number; n: number }[];
+  monthly: { m: string; pl: number; n: number; all_change: number; cash: number }[];
   ranking: { model: number; trades: number; wins: number; pl: number }[];
   dd: { dd: number; amount: number; peak: number };
   marks: { t: string; deal_type: number; price: number }[];
@@ -79,14 +79,24 @@ function Monthly({ monthly, money, balance, today }: { monthly: Data["monthly"];
   const year = Number((today ?? new Date().toISOString()).slice(0, 4)), thisMonth = Number((today ?? new Date().toISOString()).slice(5, 7)) - 1;
   const rows = MONTHS.map((_, i) => monthly.find((x) => x.m === `${year}-${String(i + 1).padStart(2, "0")}`));
   const vals = rows.map((r) => r?.pl ?? 0), total = vals.reduce((a, b) => a + b, 0), peak = Math.max(...vals.map(Math.abs), 1);
-  const base = balance - total, pct = (v: number) => (base > 0 ? `${v >= 0 ? "+" : ""}${((v / base) * 100).toFixed(1)}%` : "");
+  // same as the EA: balance at the start of a month = balance now minus every later change, deposits of that month added back
+  const fmt = (v: number) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`;
+  let after = 0, deposits = 0;
+  const monthPct = rows.map(() => 0);
+  for (let i = 11; i >= 0; i--) {
+    after += rows[i]?.all_change ?? 0;
+    const dep = Math.max(0, rows[i]?.cash ?? 0), start = balance - after + dep;
+    monthPct[i] = start > 0 ? (vals[i] / start) * 100 : 0;
+    deposits += dep;
+  }
+  const yearStart = balance - after + deposits, yearPct = yearStart > 0 ? (total / yearStart) * 100 : 0;
   return (
     <section className="card">
-      <header><h2>MONTHLY P/L <small>{year}</small></h2><b className={sign(total)}>Year {money(total, true)} {pct(total)}</b></header>
+      <header><h2>MONTHLY P/L <small>{year}</small></h2><b className={sign(total)}>Year {money(total, true)} {fmt(yearPct)}</b></header>
       <p className="note top">{rows.reduce((s, r) => s + (r?.n ?? 0), 0)} trades &nbsp; {vals.filter((v) => v > 0).length} green months &nbsp; {vals.filter((v) => v < 0).length} red months</p>
       <div className="bars">{vals.map((v, i) => (
         <div key={i} className={i === thisMonth ? "cur" : i > thisMonth ? "future" : ""} title={money(v, true)}>
-          <div className="half up">{v > 0 && <span style={{ height: `${(v / peak) * 88}%` }}><em>{pct(v)}</em></span>}</div>
+          <div className="half up">{v > 0 && <span style={{ height: `${(v / peak) * 88}%` }}><em>{fmt(monthPct[i])}</em></span>}</div>
           <div className="half down">{v < 0 && <span style={{ height: `${(-v / peak) * 100}%` }} />}</div><small>{MONTHS[i]}</small></div>
       ))}</div>
     </section>

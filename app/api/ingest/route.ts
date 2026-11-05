@@ -27,11 +27,17 @@ export async function POST(req: NextRequest) {
       [a.login, a.server, a.company ?? "", a.currency ?? "USD", !!a.demo]);
     const id = acc.rows[0].id;
 
-    for (const d of (body.deals ?? []) as Deal[])
+    // one statement for the whole batch, so a long history stays well inside the function time limit
+    const rows = ((body.deals ?? []) as Deal[]).map((d) => ({ ticket: d.ticket, position_id: d.position, deal_time: serverTime(d.time), symbol: d.symbol,
+      deal_type: d.type, entry: d.entry, magic: d.magic, model: d.magic % 1000, volume: d.volume, price: d.price, commission: d.commission, swap: d.swap, profit: d.profit, comment: d.comment }));
+    if (rows.length)
       await c.query(
         `INSERT INTO deals (account_id,ticket,position_id,deal_time,symbol,deal_type,entry,magic,model,volume,price,commission,swap,profit,comment)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) ON CONFLICT DO NOTHING`,
-        [id, d.ticket, d.position, serverTime(d.time), d.symbol, d.type, d.entry, d.magic, d.magic % 1000, d.volume, d.price, d.commission, d.swap, d.profit, d.comment]);
+         SELECT $1,ticket,position_id,deal_time,symbol,deal_type,entry,magic,model,volume,price,commission,swap,profit,comment
+         FROM jsonb_to_recordset($2::jsonb) AS x(ticket bigint, position_id bigint, deal_time timestamp, symbol text, deal_type int, entry int, magic bigint,
+           model int, volume numeric, price numeric, commission numeric, swap numeric, profit numeric, comment text)
+         ON CONFLICT DO NOTHING`,
+        [id, JSON.stringify(rows)]);
 
     await c.query(
       `INSERT INTO account_state (account_id,balance,equity,margin,server_time,ea_alive,ea_state,positions,market,updated_at)
