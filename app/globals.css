@@ -85,7 +85,7 @@ td { padding: 4px 5px; white-space: nowrap; }
 .bar { width: 50px; } .bar span { display: block; height: 7px; min-width: 2px; }
 .bar .up { background: var(--neon2); } .bar .down { background: var(--red); }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--red); margin-right: 6px; }
-.candles { width: 100%; display: block; }
+.candles { width: 100%; max-height: 210px; display: block; }
 .candles .cu line { stroke: var(--neon2); } .candles .cu rect { fill: var(--neon2); }
 .candles .cd line { stroke: var(--red); } .candles .cd rect { fill: var(--red); }
 .candles .px { stroke: var(--red); stroke-dasharray: 3 3; }
@@ -130,7 +130,7 @@ td { padding: 4px 5px; white-space: nowrap; }
 .login button { background: var(--neon2); color: #03140a; border: 0; border-radius: 8px; padding: 10px; font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { .sparks { display: none; } }
 /* wide screens: one screen like the MT5 panel; a column taller than the screen scrolls by itself */
-@media (min-width: 1451px) {
+@media (min-width: 1180px) {
   .page { height: 100vh; overflow: hidden; }
   .layout { min-height: 0; height: calc(100vh - 26px); align-items: stretch; }
   .left, .right { height: 100%; overflow-y: auto; align-content: start; scrollbar-width: thin; scrollbar-color: var(--edge) transparent; padding-right: 3px; }
@@ -141,7 +141,12 @@ td { padding: 4px 5px; white-space: nowrap; }
   .bars { height: 82px; }
   .scroll { max-height: 210px; }
 }
-@media (max-width: 1450px) {
+/* laptops and Windows display scaling: same three columns, drawn smaller */
+@media (min-width: 1180px) and (max-width: 1450px) {
+  .page { zoom: .72; height: calc(100vh / .72); }
+  .layout { height: calc(100vh / .72 - 26px); }
+}
+@media (max-width: 1179px) {
   .layout { grid-template-columns: 510px minmax(0, 1fr); }
   .left { grid-column: 1; grid-row: 1 / span 2; }
   .center { grid-column: 2; grid-row: 1; }
