@@ -161,10 +161,6 @@ td { padding: 2px 4px; white-space: nowrap; }
 .node.boost { border-color: var(--yellow); } .node.boost b, .node.boost em { color: var(--yellow); }
 .node.stop { border-color: var(--red); background: #2a0d12; } .node.stop b, .node.stop em { color: var(--red); }
 .empty { min-height: 100vh; display: grid; place-items: center; padding: 16px; text-align: center; color: var(--dim); }
-.login { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
-.login form { width: min(100%, 360px); display: grid; gap: 10px; }
-.login h1 { font-size: 22px; } .login em { color: var(--neon); }
-.login button { background: var(--neon2); color: #03140a; border: 0; border-radius: 8px; padding: 10px; font-weight: 700; }
 /* page-wide motion: opacity and transforms only, so the live figures stay readable and cheap to draw */
 body::before { content: ""; position: fixed; inset: -80px; z-index: -1; pointer-events: none; background-image: radial-gradient(circle at 50% 42%, rgba(0, 200, 83, .13), transparent 42%), linear-gradient(rgba(57, 255, 106, .035) 1px, transparent 1px), linear-gradient(90deg, rgba(57, 255, 106, .035) 1px, transparent 1px); background-size: auto, 44px 44px, 44px 44px; animation: gridDrift 18s linear infinite; }
 .brand, .row4 > *, .row3 > *, .chip, .left > .card, .right > .card { animation: cardIn .65s cubic-bezier(.2, .8, .2, 1) backwards; }
@@ -270,6 +266,39 @@ tbody tr { animation: rowIn .45s ease-out .35s backwards; } .top1 { animation: r
 @keyframes ping { from { transform: scale(1); opacity: .9; } to { transform: scale(5); opacity: 0; } }
 @keyframes nextRow { 50% { background: rgba(0, 200, 83, .16); } }
 @keyframes ecgRun { to { transform: translateX(-80px); } }
+/* login: neon scene behind a glass card */
+.login { position: relative; min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; overflow: hidden; font-family: var(--font-text), "Segoe UI", sans-serif; background: radial-gradient(70% 62% at 50% 46%, rgba(0, 200, 83, .42), rgba(0, 120, 52, .16) 52%, transparent 78%), #020805; }
+.backdrop { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.backdrop canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.orb { position: absolute; width: 56vmax; height: 56vmax; border-radius: 50%; background: radial-gradient(circle, rgba(57, 255, 106, .34), transparent 62%); }
+.orb.a { left: -22vmax; top: -24vmax; animation: orbA 15s ease-in-out infinite alternate; }
+.orb.b { right: -24vmax; bottom: -26vmax; background: radial-gradient(circle, rgba(0, 230, 160, .3), transparent 62%); animation: orbB 19s ease-in-out infinite alternate; }
+.floor { position: absolute; left: -50%; right: -50%; bottom: 0; height: 46%; overflow: hidden; perspective: 340px; -webkit-mask: linear-gradient(transparent, #000 70%); mask: linear-gradient(transparent, #000 70%); }
+.floor i { position: absolute; inset: -100% 0 -60%; transform: rotateX(68deg); transform-origin: 50% 100%; background-image: linear-gradient(rgba(57, 255, 106, .5) 1px, transparent 1px), linear-gradient(90deg, rgba(57, 255, 106, .5) 1px, transparent 1px); background-size: 64px 64px; animation: floorRun 2.4s linear infinite; }
+.gate { position: relative; z-index: 1; width: min(100%, 400px); display: grid; justify-items: center; padding: 34px 32px 30px; border: 1px solid rgba(57, 255, 106, .38); border-radius: 18px; background: rgba(3, 14, 8, .76); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 0 60px rgba(0, 200, 83, .34), inset 0 0 34px rgba(0, 200, 83, .08); animation: gateIn .8s cubic-bezier(.2, .8, .2, 1) backwards; }
+.gate.shake { animation: gateShake .42s ease-in-out; }
+.gate::before { content: ""; position: absolute; inset: -1px; padding: 1.5px; border-radius: 18px; pointer-events: none; background: conic-gradient(from var(--beam), transparent 0 62%, var(--neon2) 78%, var(--neon) 90%, var(--cyan) 97%, transparent); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); animation: beamSpin 5s linear infinite; }
+.emblem { position: relative; width: 78px; height: 78px; display: grid; place-items: center; margin-bottom: 16px; color: var(--neon); filter: drop-shadow(0 0 10px rgba(57, 255, 106, .75)); }
+.emblem i { position: absolute; inset: 0; border: 2px solid transparent; border-top-color: var(--neon); border-bottom-color: var(--neon); border-radius: 50%; animation: spin 5s linear infinite; }
+.emblem i + i { inset: 9px; border-color: transparent; border-left-color: var(--cyan); border-right-color: var(--cyan); animation-duration: 3.4s; animation-direction: reverse; }
+.login h1 { font: 800 38px/1 var(--font-display), "Segoe UI", sans-serif; letter-spacing: .12em; margin-right: -.12em; color: #f2fff6; text-shadow: 0 0 18px rgba(57, 255, 106, .7); }
+.product { margin: 8px -.26em 0 0; font: 600 13px/1.2 var(--font-display), "Segoe UI", sans-serif; letter-spacing: .26em; background: linear-gradient(90deg, var(--neon), var(--neon), #d6ffe3, var(--neon), var(--neon)) 0 0 / 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: sweep 4s linear infinite; }
+.tagline { margin: 10px 0 26px; color: #a8cfb5; font-size: 14px; letter-spacing: .03em; }
+.gate label { justify-self: start; margin-bottom: 7px; color: #c9e8d3; font-size: 14px; font-weight: 500; letter-spacing: .04em; }
+.gate input { height: 46px; padding: 0 14px; border-color: rgba(57, 255, 106, .42); border-radius: 10px; background: rgba(2, 10, 6, .82); font: 500 16px var(--font-text), "Segoe UI", sans-serif; transition: border-color .2s, box-shadow .2s; }
+.gate input::placeholder { color: #6f9179; }
+.gate input:focus { outline: none; border-color: var(--neon); box-shadow: 0 0 0 3px rgba(57, 255, 106, .2), 0 0 18px rgba(57, 255, 106, .35); }
+.fail { justify-self: start; margin-top: 8px; color: #ff7a87; font-size: 14px; font-weight: 500; }
+.gate button { position: relative; width: 100%; height: 48px; margin-top: 16px; overflow: hidden; border: 0; border-radius: 10px; color: #03140a; background: linear-gradient(90deg, #00c853, var(--neon), #00c853) 0 0 / 200% 100%; font: 800 14px var(--font-display), "Segoe UI", sans-serif; letter-spacing: .14em; text-transform: uppercase; box-shadow: 0 0 20px rgba(57, 255, 106, .45); transition: box-shadow .2s, transform .2s; animation: sweep 3.2s linear infinite; }
+.gate button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 30px rgba(57, 255, 106, .75); }
+.gate button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.gate button:disabled { cursor: wait; opacity: .72; }
+@keyframes orbA { to { transform: translate(16vmax, 12vmax); } }
+@keyframes orbB { to { transform: translate(-14vmax, -12vmax); } }
+@keyframes floorRun { to { transform: rotateX(68deg) translateY(64px); } }
+@keyframes gateIn { from { opacity: 0; transform: translateY(22px) scale(.97); } }
+@keyframes gateShake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+@media (max-width: 420px) { .gate { padding: 28px 22px 24px; } .login h1 { font-size: 32px; } }
 @media (prefers-reduced-motion: reduce) { .sparks { display: none; } *, *::before, *::after { animation: none !important; transition: none !important; } }
 /* wide screens: one screen like the MT5 panel; a column taller than the screen scrolls by itself */
 @media (min-width: 1180px) {
