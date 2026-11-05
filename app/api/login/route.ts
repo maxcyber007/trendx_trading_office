@@ -12,3 +12,9 @@ export async function POST(req: NextRequest) {
   res.cookies.set(COOKIE, await makeSession(), { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", maxAge, path: "/" });
   return res;
 }
+
+export async function DELETE() {
+  const res = NextResponse.json({ ok: true });
+  res.cookies.delete(COOKIE);
+  return res;
+}

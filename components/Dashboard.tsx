@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { MODEL_NAMES, modelCode } from "@/lib/models";
 import NeuralCore from "./NeuralCore";
-import { AiChip, Calendar as CalIcon, ChartUp, Clock, Coins, Logo, Neural, Person, Power, Pulse, Shield, Signal, Trophy } from "./icons";
+import { AiChip, Calendar as CalIcon, ChartUp, Clock, Coins, Logo, Logout, Neural, Person, Power, Pulse, Shield, Signal, Trophy } from "./icons";
 
 type Account = { id: string; login: string; server: string; company: string; currency: string; is_demo: boolean };
 type Position = { ticket: number; symbol: string; type: number; magic: number; volume: number; open_price: number; profit: number };
@@ -202,6 +202,8 @@ export default function Dashboard() {
     return () => { live = false; clearInterval(t); };
   }, [id]);
 
+  const logout = () => fetch("/api/login", { method: "DELETE" }).then((r) => { if (!r.ok) throw new Error(); location.href = "/login"; }).catch(() => setError("ออกจากระบบไม่สำเร็จ"));
+
   if (!loaded) return <main className="empty">{error || "กำลังโหลด..."}</main>;
   if (error && !data) return <main className="empty">{error}</main>;
   if (!accounts.length) return <main className="empty">ยังไม่มีบัญชีส่งข้อมูลเข้ามา เปิด TrendX Cloud Bridge ใน MT5 ก่อน</main>;
@@ -308,7 +310,8 @@ export default function Dashboard() {
         <select aria-label="เลือกบัญชี" value={id} onChange={(e) => setId(e.target.value)}>
           {accounts.map((a) => <option key={a.id} value={a.id}>{a.login} · {a.company || a.server}{a.is_demo ? " (Demo)" : ""}</option>)}
         </select>
-        <span>Server Time : {state?.server_time?.replaceAll("-", ".") ?? "-"}</span><span className={state && state.age > 30 ? "neg" : ""}>Updated : {state ? `${state.age}s ago` : "-"}</span>{error && <span className="neg">{error}</span>}</footer>
+        <span>Server Time : {state?.server_time?.replaceAll("-", ".") ?? "-"}</span><span className={state && state.age > 30 ? "neg" : ""}>Updated : {state ? `${state.age}s ago` : "-"}</span>{error && <span className="neg">{error}</span>}
+        <button type="button" className="logout" onClick={logout}><Logout /> Logout</button></footer>
     </div>
   );
 }

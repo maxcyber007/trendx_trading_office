@@ -4,6 +4,7 @@ const S = ({ size = 20, children }: { size?: number; children: React.ReactNode }
 );
 
 export const Logo = () => <S size={34}><path d="M4 20h16" /><path d="M6 17v-3M11 17v-6M16 17v-9" strokeWidth="3" /><path d="M4 11l6-5 3 3 7-6M16 3h4v4" /></S>;
+export const Logout = () => <S size={14}><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9" /></S>;
 export const Power = () => <S size={30}><circle cx="12" cy="12" r="10" /><path d="M12 7v5M8.6 8.8a5 5 0 1 0 6.8 0" /></S>;
 export const Coins = () => <S><ellipse cx="12" cy="6" rx="7" ry="3" fill="currentColor" /><path d="M5 6v5c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 11v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" /></S>;
 export const ChartUp = () => <S><path d="M4 20V14M10 20V10M16 20V7" strokeWidth="3" /><path d="M4 9l6-4 3 2 7-4" /></S>;
