@@ -42,7 +42,7 @@ function Spark({ daily }: { daily: Data["daily"] }) {
   if (pts.length < 2) return <svg className="spark" />;
   const lo = Math.min(...pts, 0), hi = Math.max(...pts, 1);
   const xy = pts.map((v, i) => `${(i / (pts.length - 1)) * 200},${46 - ((v - lo) / (hi - lo)) * 42}`);
-  return <svg className="spark" viewBox="0 0 200 48" preserveAspectRatio="none" aria-hidden="true"><polygon points={`0,48 ${xy.join(" ")} 200,48`} /><polyline points={xy.join(" ")} /></svg>;
+  return <svg className="spark" viewBox="0 0 200 48" preserveAspectRatio="none" aria-hidden="true"><polygon points={`0,48 ${xy.join(" ")} 200,48`} /><polyline pathLength={1} points={xy.join(" ")} /></svg>;
 }
 
 // day amounts are shortened to fit the cell, as on the EA panel
@@ -118,7 +118,7 @@ function Live({ market, marks }: { market: Market | null | undefined; marks: Dat
       <svg className="candles" viewBox="0 0 330 128" role="img" aria-label="H1 price chart">
         <line className="pxl" x1="0" x2={X} y1={Y(last[4])} y2={Y(last[4])} />
         {c.map((k, i) => { const u = k[4] >= k[1], x = i * w + w / 2; return (
-          <g key={k[0]} className={u ? "cu" : "cd"}><line x1={x} x2={x} y1={Y(k[2])} y2={Y(k[3])} /><rect x={x - w * 0.32} y={Math.min(Y(k[1]), Y(k[4]))} width={w * 0.64} height={Math.max(1, Math.abs(Y(k[1]) - Y(k[4])))} /></g>); })}
+          <g key={k[0]} className={u ? "cu" : "cd"} style={{ "--i": i } as React.CSSProperties}><line x1={x} x2={x} y1={Y(k[2])} y2={Y(k[3])} /><rect x={x - w * 0.32} y={Math.min(Y(k[1]), Y(k[4]))} width={w * 0.64} height={Math.max(1, Math.abs(Y(k[1]) - Y(k[4])))} /></g>); })}
         {seen.map((m, i) => { const x = Math.floor((Number(m.t) - c[0][0]) / 3600) * w + w / 2, y = Y(m.price); return <path key={i} className={m.deal_type === 0 ? "mkb" : "mks"} d={m.deal_type === 0 ? `M${x - 3} ${y + 5}h6l-3 -5z` : `M${x - 3} ${y - 5}h6l-3 5z`} />; })}
         {levels.map((p) => <text key={p} x="326" y={Y(p) + 3} textAnchor="end">{p.toFixed(2)}</text>)}
         <rect className={up ? "tagu" : "tagd"} x="276" y={Y(last[4]) - 6} width="50" height="12" rx="2" /><text className="tagp" x="301" y={Y(last[4]) + 3} textAnchor="middle">{last[4].toFixed(2)}</text>

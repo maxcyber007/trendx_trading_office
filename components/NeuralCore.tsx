@@ -52,6 +52,8 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
 
       <g className="core">
         <circle className="halo" cx={CORE.x} cy={CORE.y} r={CORE.r + 8} />
+        <circle className="orbit" cx={CORE.x} cy={CORE.y} r={CORE.r + 13} />
+        <circle className="orbit two" cx={CORE.x} cy={CORE.y} r={CORE.r + 7} />
         <circle className="ringc" cx={CORE.x} cy={CORE.y} r={CORE.r} />
         <text x={CORE.x} y={CORE.y - 3} textAnchor="middle">AI CORE</text>
         <text className="sub" x={CORE.x} y={CORE.y + 18} textAnchor="middle">{MODEL_NAMES.length} &gt; 1</text>

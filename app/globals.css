@@ -165,11 +165,68 @@ td { padding: 2px 4px; white-space: nowrap; }
 .login form { width: min(100%, 360px); display: grid; gap: 10px; }
 .login h1 { font-size: 22px; } .login em { color: var(--neon); }
 .login button { background: var(--neon2); color: #03140a; border: 0; border-radius: 8px; padding: 10px; font-weight: 700; }
+/* page-wide motion: opacity and transforms only, so the live figures stay readable and cheap to draw */
+body::before { content: ""; position: fixed; inset: -80px; z-index: -1; pointer-events: none; background-image: radial-gradient(circle at 50% 42%, rgba(0, 200, 83, .13), transparent 42%), linear-gradient(rgba(57, 255, 106, .035) 1px, transparent 1px), linear-gradient(90deg, rgba(57, 255, 106, .035) 1px, transparent 1px); background-size: auto, 44px 44px, 44px 44px; animation: gridDrift 18s linear infinite; }
+.brand, .row4 > *, .row3 > *, .chip, .left > .card, .right > .card { animation: cardIn .65s cubic-bezier(.2, .8, .2, 1) backwards; }
+.row4 > :nth-child(2), .chip:nth-child(2) { animation-delay: .06s; } .row4 > :nth-child(3), .chip:nth-child(3) { animation-delay: .12s; } .row4 > :nth-child(4), .chip:nth-child(4) { animation-delay: .18s; }
+.row3 > :nth-child(1) { animation-delay: .2s; } .row3 > :nth-child(2) { animation-delay: .26s; } .row3 > :nth-child(3) { animation-delay: .32s; }
+.left > .card:nth-of-type(1) { animation-delay: .36s; } .left > .card:nth-of-type(2) { animation-delay: .44s; } .left > .card:nth-of-type(3) { animation-delay: .52s; }
+.right > .card:nth-child(1) { animation-delay: .1s; } .right > .card:nth-child(2) { animation-delay: .2s; } .right > .card:nth-child(3) { animation-delay: .3s; } .right > .card:nth-child(4) { animation-delay: .4s; } .right > .card:nth-child(5) { animation-delay: .5s; }
+.left { animation: panelGlow 5s ease-in-out infinite; }
+.card, .chip { transition: border-color .25s, box-shadow .25s, transform .25s; }
+.card:hover, .chip:hover { border-color: var(--neon); box-shadow: 0 0 14px rgba(57, 255, 106, .24); transform: translateY(-1px); }
+.brand em { background: linear-gradient(90deg, var(--neon), var(--neon), #c9ffdb, var(--neon), var(--neon)) 0 0 / 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: textFlow 4.5s linear infinite; }
+.ai, .logo { animation: aiPulse 2.6s ease-in-out infinite; }
+.run h3.pos .ico, .chip .ico { animation: iconPulse 2.6s ease-in-out infinite; }
+.live, .dot { animation: dotBlink 1.3s ease-in-out infinite; }
+.ring .fill { animation: ringDraw 1.2s ease-out .25s backwards; }
+.spark polyline { stroke-dasharray: 1; animation: lineDraw 1.3s ease-out .35s backwards; }
+.spark polygon { animation: fadeIn 1.2s ease-out .6s backwards; }
+.meter span, .meter2 span { animation: meterFill 1s ease-out .4s backwards; transform-origin: left; }
+.day { animation: fadeUp .45s ease-out .45s backwards; } .day.up, .day.down, .day.now { animation: fadeUp .45s ease-out .45s backwards, dayGlow 2.8s ease-in-out infinite; }
+tbody tr { animation: rowIn .45s ease-out .35s backwards; } .top1 { animation: rowIn .45s ease-out .35s backwards, topGlow 2.8s ease-in-out infinite; }
+.bar span { animation: meterFill .9s ease-out .45s backwards; transform-origin: left; }
+.candles g { animation: fadeIn .45s ease-out calc(var(--i, 0) * 12ms) backwards; }
+.candles .pxl { animation: dashFlow 1.2s linear infinite; }
+.candles .tagu, .candles .tagd { animation: fadeBlink 2s ease-in-out infinite; }
+.pill:not(.off), .flt i.on { animation: aiPulse 2.4s ease-in-out infinite; }
+.imp u { animation: impBeat 1.4s ease-in-out infinite; } .imp u:nth-child(2) { animation-delay: .15s; } .imp u:nth-child(3) { animation-delay: .3s; }
+.inode circle, .mnode circle { animation: dotBlink 2.4s ease-in-out infinite; }
+.edges path:nth-child(6n) { stroke-dasharray: 5 13; animation: dashFlow 1.8s linear infinite; opacity: .9; }
+.core .halo { animation: corePulse 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.core .orbit { fill: none; stroke: var(--neon); stroke-width: 1.5; stroke-dasharray: 8 16; opacity: .75; transform-box: fill-box; transform-origin: center; animation: spin 12s linear infinite; }
+.core .orbit.two { stroke: var(--cyan); stroke-dasharray: 2 12; animation-direction: reverse; animation-duration: 8s; }
+.out.on rect { animation: outPulse 1.7s ease-in-out infinite; }
+.mnode.boost > rect { animation: boostGlow 2.8s ease-in-out infinite; } .mnode.stop > rect { animation: stopGlow 1.6s ease-in-out infinite; }
+.status .dot { animation: dotBlink 1.1s ease-in-out infinite; }
+@keyframes gridDrift { to { transform: translate3d(44px, 44px, 0); } }
+@keyframes cardIn { from { opacity: 0; transform: translateY(12px) scale(.985); } }
+@keyframes panelGlow { 50% { box-shadow: 0 0 22px rgba(0, 200, 83, .28); } }
+@keyframes textFlow { to { background-position: -220% 0; } }
+@keyframes aiPulse { 50% { box-shadow: 0 0 15px rgba(57, 255, 106, .55); } }
+@keyframes iconPulse { 50% { filter: drop-shadow(0 0 5px currentColor); } }
+@keyframes dotBlink { 50% { opacity: .35; } }
+@keyframes ringDraw { from { stroke-dashoffset: 188; } }
+@keyframes lineDraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes fadeIn { from { opacity: 0; } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } }
+@keyframes meterFill { from { transform: scaleX(0); } }
+@keyframes rowIn { from { opacity: 0; transform: translateX(10px); } }
+@keyframes dayGlow { 50% { box-shadow: 0 0 9px rgba(57, 255, 106, .32); } }
+@keyframes topGlow { 50% { background: #1a5a30; } }
+@keyframes dashFlow { to { stroke-dashoffset: -36; } }
+@keyframes fadeBlink { 50% { opacity: .68; } }
+@keyframes impBeat { 50% { transform: scaleY(1.45); } }
+@keyframes corePulse { 50% { transform: scale(1.12); opacity: .55; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes outPulse { 50% { filter: drop-shadow(0 0 7px currentColor); } }
+@keyframes boostGlow { 50% { filter: drop-shadow(0 0 4px var(--yellow)); } }
+@keyframes stopGlow { 50% { filter: drop-shadow(0 0 5px var(--red)); } }
 @keyframes scan { from { transform: translateX(-40px); } to { transform: translateX(520px); } }
 @keyframes barRise { from { transform: scaleY(0); opacity: .2; } to { transform: scaleY(1); opacity: 1; } }
 @keyframes barFlow { to { background-position: 0 -240%; } }
 @keyframes curPulse { 50% { box-shadow: 0 0 14px rgba(57, 255, 106, .55), inset 0 0 12px rgba(57, 255, 106, .16); } }
-@media (prefers-reduced-motion: reduce) { .sparks, .scan { display: none; } .half span, .bars .cur { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .sparks, .scan { display: none; } *, *::before { animation: none !important; transition: none !important; } }
 /* wide screens: one screen like the MT5 panel; a column taller than the screen scrolls by itself */
 @media (min-width: 1180px) {
   .page { height: 100vh; overflow: hidden; }
