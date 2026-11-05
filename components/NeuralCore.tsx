@@ -17,6 +17,15 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
 
   return (
     <svg className="net" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="TrendX neural network with 39 models">
+      <defs>
+        <radialGradient id="coreGlow">
+          <stop offset="0" stopColor="#39ff6a" stopOpacity=".62" />
+          <stop offset=".24" stopColor="#00c853" stopOpacity=".42" />
+          <stop offset=".58" stopColor="#00c853" stopOpacity=".14" />
+          <stop offset="1" stopColor="#00c853" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <circle className="coreglow" cx={CORE.x} cy={CORE.y} r="250" fill="url(#coreGlow)" />
       <text className="nh big" x="0" y="14">TRENDX NEURAL CORE</text>
       <text className="nh" x="0" y="114">INPUT LAYER</text>
       <text className="nh" x="225" y="36">MODEL LAYER</text>

@@ -146,7 +146,8 @@ td { padding: 2px 4px; white-space: nowrap; }
 .mnode.stop > rect { stroke: var(--red); fill: #2a0d12; } .mnode.stop circle { fill: var(--red); } .mnode.stop .code { fill: var(--red); } .mnode.stop text { fill: #b98a90; }
 .mnode .tag { fill: var(--yellow); stroke: none; } .mnode.stop .tag { fill: var(--red); }
 .mnode .tagt, .mnode.boost .tagt, .mnode.stop .tagt { fill: #1a1400; font-size: 9.5px; font-weight: 800; }
-.core .halo { fill: rgba(57, 255, 106, .07); } .core .ringc { fill: #06140c; stroke: var(--neon); stroke-width: 3; }
+.core .halo { fill: rgba(57, 255, 106, .16); } .core .ringc { fill: #06140c; stroke: var(--neon); stroke-width: 3.5; filter: drop-shadow(0 0 9px var(--neon)); }
+.coreglow { transform-box: fill-box; transform-origin: center; animation: coreAura 3.6s ease-in-out infinite; }
 .core text { fill: var(--text); font-size: 13px; font-weight: 700; } .core .sub { fill: var(--dim); font-size: 11px; font-weight: 500; }
 .out rect { fill: #06140c; stroke: var(--neon2); stroke-width: 1.4; } .out text { fill: var(--neon); font-size: 13px; font-weight: 700; }
 .out.short rect { fill: #2a0d12; stroke: var(--red); } .out.short text { fill: var(--red); }
@@ -216,6 +217,7 @@ tbody tr { animation: rowIn .45s ease-out .35s backwards; } .top1 { animation: r
 @keyframes fadeBlink { 50% { opacity: .68; } }
 @keyframes impBeat { 50% { transform: scaleY(1.45); } }
 @keyframes corePulse { 50% { transform: scale(1.12); opacity: .55; } }
+@keyframes coreAura { 50% { opacity: .78; transform: scale(1.08); } }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes outPulse { 50% { filter: drop-shadow(0 0 7px currentColor); } }
 @keyframes boostGlow { 50% { filter: drop-shadow(0 0 4px var(--yellow)); } }
