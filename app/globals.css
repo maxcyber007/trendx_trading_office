@@ -82,7 +82,6 @@ td { padding: 2px 4px; white-space: nowrap; }
 .note { color: var(--dim); font-size: 11px; margin-top: 3px; white-space: pre-wrap; } .note.top { margin: 0 0 2px; }
 .monthly { position: relative; overflow: hidden; background-image: radial-gradient(circle at 78% 110%, rgba(0, 200, 83, .16), transparent 55%), linear-gradient(rgba(57, 255, 106, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(57, 255, 106, .045) 1px, transparent 1px); background-size: auto, 100% 18px, 18px 100%; }
 .bars { position: relative; display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; height: 112px; }
-.scan { position: absolute; top: 0; bottom: 14px; left: 0; width: 34px; pointer-events: none; z-index: 1; background: linear-gradient(90deg, transparent, rgba(57, 255, 106, .2), transparent); border-right: 1px solid rgba(57, 255, 106, .75); animation: scan 5.5s linear infinite; }
 .bars > div { display: grid; grid-template-rows: 1fr 8px auto; min-width: 0; min-height: 0; text-align: center; border-radius: 4px; }
 .bars .cur { outline: 1px solid var(--neon2); background: rgba(0, 200, 83, .08); animation: curPulse 2.4s ease-in-out infinite; }
 .bars .future small { opacity: .4; }
@@ -172,7 +171,6 @@ body::before { content: ""; position: fixed; inset: -80px; z-index: -1; pointer-
 .row3 > :nth-child(1) { animation-delay: .2s; } .row3 > :nth-child(2) { animation-delay: .26s; } .row3 > :nth-child(3) { animation-delay: .32s; }
 .left > .card:nth-of-type(1) { animation-delay: .36s; } .left > .card:nth-of-type(2) { animation-delay: .44s; } .left > .card:nth-of-type(3) { animation-delay: .52s; }
 .right > .card:nth-child(1) { animation-delay: .1s; } .right > .card:nth-child(2) { animation-delay: .2s; } .right > .card:nth-child(3) { animation-delay: .3s; } .right > .card:nth-child(4) { animation-delay: .4s; } .right > .card:nth-child(5) { animation-delay: .5s; }
-.left { animation: panelGlow 5s ease-in-out infinite; }
 .card, .chip { transition: border-color .25s, box-shadow .25s, transform .25s; }
 .card:hover, .chip:hover { border-color: var(--neon); box-shadow: 0 0 14px rgba(57, 255, 106, .24); transform: translateY(-1px); }
 .brand em { background: linear-gradient(90deg, var(--neon), var(--neon), #c9ffdb, var(--neon), var(--neon)) 0 0 / 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: textFlow 4.5s linear infinite; }
@@ -222,11 +220,25 @@ tbody tr { animation: rowIn .45s ease-out .35s backwards; } .top1 { animation: r
 @keyframes outPulse { 50% { filter: drop-shadow(0 0 7px currentColor); } }
 @keyframes boostGlow { 50% { filter: drop-shadow(0 0 4px var(--yellow)); } }
 @keyframes stopGlow { 50% { filter: drop-shadow(0 0 5px var(--red)); } }
-@keyframes scan { from { transform: translateX(-40px); } to { transform: translateX(520px); } }
+/* left panel: neon green light behind translucent cards, moving slowly so the figures stay readable */
+.left { position: relative; isolation: isolate; background-color: #03130a; background-image: radial-gradient(circle at 18% 12%, rgba(57, 255, 106, .3), transparent 34%), radial-gradient(circle at 88% 42%, rgba(0, 255, 136, .22), transparent 36%), radial-gradient(circle at 34% 88%, rgba(0, 200, 83, .34), transparent 42%), linear-gradient(145deg, #042614, #03130a 50%, #063018); background-size: 140% 140%, 150% 150%, 150% 150%, 100% 100%; animation: panelGlow 5s ease-in-out infinite, neonDrift 13s ease-in-out infinite alternate; }
+.left::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: repeating-linear-gradient(115deg, transparent 0 34px, rgba(57, 255, 106, .05) 34px 35px); animation: fadeBlink 4s ease-in-out infinite; }
+.left .card, .left .chip { position: relative; overflow: hidden; background: rgba(4, 18, 11, .76); border-color: rgba(57, 255, 106, .46); }
+.left .card::after, .left .chip::after { content: ""; position: absolute; left: -35%; top: 0; width: 35%; height: 1px; pointer-events: none; background: linear-gradient(90deg, transparent, var(--neon), transparent); box-shadow: 0 0 8px var(--neon); animation: edgeRun 4.5s linear infinite; }
+.left .card:nth-child(2n)::after, .left .chip:nth-child(2n)::after { animation-delay: 1.2s; } .left .card:nth-child(3n)::after, .left .chip:nth-child(3n)::after { animation-delay: 2.2s; }
+.stat strong, .dd strong { animation: figureGlow 3.2s ease-in-out infinite; }
+.ring .fill { filter: drop-shadow(0 0 4px var(--neon)); }
+.monthly { background-color: rgba(4, 28, 15, .82); }
+.monthly::before { content: ""; position: absolute; left: -20%; right: -20%; bottom: -44px; height: 92px; pointer-events: none; background: radial-gradient(ellipse at center, rgba(57, 255, 106, .32), transparent 68%); animation: waveDrift 4.5s ease-in-out infinite alternate; }
+.monthly > * { position: relative; }
+@keyframes neonDrift { from { background-position: 0% 0%, 100% 40%, 20% 100%, 0 0; } to { background-position: 40% 18%, 58% 72%, 62% 76%, 0 0; } }
+@keyframes edgeRun { to { left: 110%; } }
+@keyframes figureGlow { 50% { text-shadow: 0 0 9px rgba(57, 255, 106, .5); } }
+@keyframes waveDrift { from { transform: translateX(-8%) scaleY(.9); opacity: .55; } to { transform: translateX(8%) scaleY(1.12); opacity: 1; } }
 @keyframes barRise { from { transform: scaleY(0); opacity: .2; } to { transform: scaleY(1); opacity: 1; } }
 @keyframes barFlow { to { background-position: 0 -240%; } }
 @keyframes curPulse { 50% { box-shadow: 0 0 14px rgba(57, 255, 106, .55), inset 0 0 12px rgba(57, 255, 106, .16); } }
-@media (prefers-reduced-motion: reduce) { .sparks, .scan { display: none; } *, *::before { animation: none !important; transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .sparks { display: none; } *, *::before { animation: none !important; transition: none !important; } }
 /* wide screens: one screen like the MT5 panel; a column taller than the screen scrolls by itself */
 @media (min-width: 1180px) {
   .page { height: 100vh; overflow: hidden; }

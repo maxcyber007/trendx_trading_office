@@ -94,7 +94,7 @@ function Monthly({ monthly, money, balance, today }: { monthly: Data["monthly"];
     <section className="card monthly">
       <header><h2>MONTHLY P/L <small>{year}</small></h2><b className={sign(total)}>Year {money(total, true)} {fmt(yearPct)}</b></header>
       <p className="note top">{rows.reduce((s, r) => s + (r?.n ?? 0), 0)} trades &nbsp; {vals.filter((v) => v > 0).length} green months &nbsp; {vals.filter((v) => v < 0).length} red months</p>
-      <div className="bars"><i className="scan" aria-hidden="true" />{vals.map((v, i) => (
+      <div className="bars">{vals.map((v, i) => (
         <div key={i} className={i === thisMonth ? "cur" : i > thisMonth ? "future" : ""} style={{ "--i": i } as React.CSSProperties} title={money(v, true)}>
           <div className="half up">{v > 0 && <span style={{ height: `${(v / peak) * 88}%` }}><em>{fmt(monthPct[i])}</em></span>}</div>
           <div className="half down">{v < 0 && <span style={{ height: `${(-v / peak) * 100}%` }} />}</div><small>{MONTHS[i]}</small></div>
