@@ -22,9 +22,9 @@ export async function POST(req: NextRequest) {
   try {
     await c.query("BEGIN");
     const acc = await c.query(
-      `INSERT INTO accounts (login, server, company, currency, is_demo) VALUES ($1,$2,$3,$4,$5)
-       ON CONFLICT (login, server) DO UPDATE SET company=$3, currency=$4, is_demo=$5 RETURNING id`,
-      [a.login, a.server, a.company ?? "", a.currency ?? "USD", !!a.demo]);
+      `INSERT INTO accounts (login, server, company, currency, is_demo, name) VALUES ($1,$2,$3,$4,$5,NULLIF($6,''))
+       ON CONFLICT (login, server) DO UPDATE SET company=$3, currency=$4, is_demo=$5, name=COALESCE(NULLIF($6,''),accounts.name) RETURNING id`,
+      [a.login, a.server, a.company ?? "", a.currency ?? "USD", !!a.demo, a.name ?? ""]);
     const id = acc.rows[0].id;
 
     // one statement for the whole batch, so a long history stays well inside the function time limit

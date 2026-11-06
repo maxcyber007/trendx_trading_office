@@ -4,7 +4,7 @@ import { MODEL_NAMES, modelCode } from "@/lib/models";
 import NeuralCore from "./NeuralCore";
 import { AiChip, Bars, Calendar as CalIcon, ChartUp, Clock, Coins, Layers, Logo, Logout, Neural, Person, Power, Pulse, Shield, Signal, Trophy } from "./icons";
 
-type Account = { id: string; login: string; server: string; company: string; currency: string; is_demo: boolean };
+type Account = { id: string; login: string; server: string; company: string; currency: string; is_demo: boolean; name: string | null };
 type Position = { ticket: number; symbol: string; type: number; magic: number; volume: number; open_price: number; profit: number };
 type News = { t: number; name: string; cur: string; imp: number; act: string; fc: string };
 type Market = { symbol: string; candles: [number, number, number, number, number][]; vol_ratio: number; news: News[] };
@@ -311,8 +311,9 @@ export default function Dashboard() {
       </main>
       <footer className="status"><span className="dot" /><b>TrendX Ultimate AI Pro</b>
         <select aria-label="เลือกบัญชี" value={id} onChange={(e) => setId(e.target.value)}>
-          {accounts.map((a) => <option key={a.id} value={a.id}>{a.login} · {a.company || a.server}{a.is_demo ? " (Demo)" : ""}</option>)}
+          {accounts.map((a) => <option key={a.id} value={a.id}>{a.login}{a.is_demo ? " (Demo)" : ""}</option>)}
         </select>
+        <span className="acct" title={account.name ?? ""}>Account : {account.name || "-"}</span><span className="acct" title={account.company}>Broker : {account.company || "-"}</span><span className="acct" title={account.server}>Server : {account.server}</span>
         <span>Server Time : {state?.server_time?.replaceAll("-", ".") ?? "-"}</span><span className={state && state.age > 30 ? "neg" : ""}>Updated : {state ? `${state.age}s ago` : "-"}</span>{error && <span className="neg">{error}</span>}
         <button type="button" className="logout" onClick={logout}><Logout /> Logout</button></footer>
     </div>
