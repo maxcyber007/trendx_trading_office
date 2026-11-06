@@ -306,7 +306,7 @@ export default function Dashboard() {
           <Live market={state?.market} marks={data.marks ?? []} />
           <NewsPanel news={state?.market?.news} filter={ea?.news_filter} />
           <Monitor sys={ea?.sys} alive={eaOn} />
-          <section className="card dev"><span className="avatar"><Person /></span><div><small>DEVELOPED BY</small><b>TrendX Trading Space</b><span>trendx.cloudsync@gmail.com</span></div></section>
+          <section className="card dev"><span className="avatar"><Person /></span><div><small>DEVELOPED BY</small><b>TRENDX TRADING SPACE</b><span>trendx.cloudsync@gmail.com</span></div></section>
         </div>
       </main>
       <footer className="status"><span className="dot" /><b>TrendX Ultimate AI Pro</b>
