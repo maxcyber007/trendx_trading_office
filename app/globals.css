@@ -32,7 +32,7 @@ select, input { background: var(--card); color: var(--text); border: 1px solid v
 .brand em { color: var(--neon); font-weight: 700; }
 .brand p { color: var(--dim); font-size: 12px; }
 .logo { width: 42px; height: 42px; display: grid; place-items: center; background: #0d2c18; border-radius: 8px; color: var(--neon); }
-.ai { margin-left: auto; width: 52px; height: 46px; display: grid; place-items: center; color: var(--text); } .ai svg { width: 46px; height: 46px; }
+.ai { margin-left: auto; width: 52px; height: 46px; display: grid; place-items: center; color: var(--neon); } .ai svg { width: 46px; height: 46px; }
 .row4 { display: grid; grid-template-columns: 1.95fr 1fr 1fr 1fr; gap: 6px; }
 .row3 { display: grid; grid-template-columns: 1.7fr 1.3fr 1.3fr; gap: 6px; }
 .stat { display: flex; flex-direction: column; gap: 1px; }
