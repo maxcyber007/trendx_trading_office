@@ -1,40 +1,132 @@
-import { FAMILIES, MODEL_FAMILIES, MODEL_NAMES, MODEL_OFFSETS, modelCode } from "@/lib/models";
+import { useEffect, useRef } from "react";
+import { FAMILIES, MODEL_FAMILIES, MODEL_NAMES, modelCode } from "@/lib/models";
 
-// geometry taken from the EA dashboard's network background
-const W = 910, H = 860, IN_W = 172, MOD_W = 172, MOD_H = 26, CORE = { x: 684, y: 466, r: 56 };
+const W = 910, H = 860, IN_W = 172, BALL = { x: 468, y: 418, r: 272 }, CORE_R = 56, TILT = .34, SPEED = .22;
+const PAD_Y = 772, RISE = [-44, -26, -9, 12, 30, 47], NODE_W = 52, NODE_H = 20;
 const inY = (i: number) => 124 + i * 56.4;
-const modX = (k: number) => (k % 2 === 0 ? 225 : 415);
-const modY = (k: number) => 48 + Math.floor(k / 2) * 40 + (k % 2) * 20;
 const curve = (x1: number, y1: number, x2: number, y2: number) => `M${x1} ${y1} C${(x1 + x2) / 2} ${y1} ${(x1 + x2) / 2} ${y2} ${x2} ${y2}`;
-const families = (k: number) => MODEL_FAMILIES.slice(MODEL_OFFSETS[k], MODEL_OFFSETS[k + 1]);
-const short = (s: string) => (s.length > 16 ? `${s.slice(0, 15)}..` : s);
+
+type V = [number, number, number];
+// the 39 models spread evenly over the ball
+const SPOTS: V[] = MODEL_NAMES.map((_, k, all) => {
+  const y = 1 - (2 * (k + .5)) / all.length, r = Math.sqrt(1 - y * y), a = k * 2.399963;
+  return [Math.cos(a) * r, y, Math.sin(a) * r];
+});
+const circle = (at: (t: number) => V) => Array.from({ length: 33 }, (_, i) => at((i / 32) * Math.PI * 2));
+const WIRES: V[][] = [
+  ...[0, 1, 2, 3, 4, 5].map((m) => { const a = (m / 6) * Math.PI; return circle((t) => [Math.cos(t) * Math.cos(a), Math.sin(t), Math.cos(t) * Math.sin(a)]); }),
+  ...[-.72, -.4, 0, .4, .72].map((y) => { const r = Math.sqrt(1 - y * y); return circle((t) => [Math.cos(t) * r, y, Math.sin(t) * r]); }),
+];
+// turns a point on the ball, then tips the ball toward the viewer
+const turn = ([x, y, z]: V, angle: number): V => {
+  const c = Math.cos(angle), s = Math.sin(angle), x1 = x * c + z * s, z1 = z * c - x * s;
+  return [x1, y * Math.cos(TILT) - z1 * Math.sin(TILT), y * Math.sin(TILT) + z1 * Math.cos(TILT)];
+};
+const px = (x: number) => (BALL.x + x * BALL.r).toFixed(1), py = (y: number) => (BALL.y - y * BALL.r).toFixed(1);
+// where a straight run from the side meets the ball's outline
+const rim = (y: number, side: number) => { const dy = Math.max(-.92, Math.min(.92, (y - BALL.y) / BALL.r)); return [BALL.x + side * Math.sqrt(1 - dy * dy) * BALL.r, BALL.y + dy * BALL.r]; };
+
+// the whole picture leans a little toward the pointer
+const lean = (e: React.PointerEvent<SVGSVGElement>) => {
+  const box = e.currentTarget.getBoundingClientRect(), s = e.currentTarget.style;
+  s.setProperty("--ry", `${((e.clientX - box.left) / box.width - .5) * 7}deg`);
+  s.setProperty("--rx", `${(.5 - (e.clientY - box.top) / box.height) * 5}deg`);
+};
+const rest = (e: React.PointerEvent<SVGSVGElement>) => { e.currentTarget.style.removeProperty("--ry"); e.currentTarget.style.removeProperty("--rx"); };
 
 export default function NeuralCore({ states, side }: { states: Map<number, number>; side: number }) {
   const count = FAMILIES.map((_, f) => MODEL_FAMILIES.filter((x) => x === f).length);
-  const input = MODEL_NAMES.flatMap((_, k) => families(k).map((f) => curve(IN_W, inY(f) + 13, modX(k), modY(k) + MOD_H / 2)));
-  const output = MODEL_NAMES.map((_, k) => curve(modX(k) + MOD_W, modY(k) + MOD_H / 2, CORE.x - CORE.r, CORE.y));
-  const flows = MODEL_NAMES.map((_, k) => k).filter((k) => k % 3 === 0);   // moving signals on every third model
+  const input = FAMILIES.map((_, i) => { const [x, y] = rim(inY(i) + 13, -1); return curve(IN_W, inY(i) + 13, x, y); });
+  const [lx, ly] = rim(378, 1), [sx, sy] = rim(592, 1);
+  const front = useRef<SVGPathElement>(null), back = useRef<SVGPathElement>(null), links = useRef<SVGPathElement>(null);
+  const nodes = useRef<(SVGGElement | null)[]>([]), focus = useRef<SVGTextElement>(null), hover = useRef(-1);
+
+  useEffect(() => {
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let frame = 0, angle = 0, last = 0, shown = -1;
+    const label = (k: number) => {
+      if (k === shown || !focus.current) return;
+      shown = k;
+      focus.current.textContent = `${modelCode(k + 1)}  ${MODEL_NAMES[k]}`;
+    };
+    const draw = () => {
+      let f = "", b = "", l = "", near = 0, nearZ = -2;
+      for (const wire of WIRES) {
+        let prev: V | null = null;
+        for (const p of wire) {
+          const q = turn(p, angle);
+          if (prev) {
+            const seg = `M${px(prev[0])} ${py(prev[1])}L${px(q[0])} ${py(q[1])}`;
+            if (q[2] + prev[2] > 0) f += seg; else b += seg;
+          }
+          prev = q;
+        }
+      }
+      SPOTS.forEach((spot, k) => {
+        const [x, y, z] = turn(spot, angle), g = nodes.current[k];
+        if (z > nearZ) { nearZ = z; near = k; }
+        if (!g) return;
+        // a node passing behind the core disappears behind it
+        const hidden = z < 0 && Math.hypot(x, y) * BALL.r < CORE_R + 16;
+        g.setAttribute("transform", `translate(${px(x)} ${py(y)}) scale(${(.92 + z * .24).toFixed(3)})`);
+        g.setAttribute("opacity", hidden ? "0" : (.5 + (z + 1) * .25).toFixed(2));
+        if (z > -.15) l += `M${px(x)} ${py(y)}L${BALL.x} ${BALL.y}`;
+      });
+      front.current?.setAttribute("d", f);
+      back.current?.setAttribute("d", b);
+      links.current?.setAttribute("d", l);
+      label(hover.current >= 0 ? hover.current : near);
+    };
+    const tick = (now: number) => {
+      frame = requestAnimationFrame(tick);
+      if (now - last < 33 || !front.current?.getBoundingClientRect().width) return;   // about 30 frames a second, nothing while hidden
+      if (hover.current < 0) angle += ((now - last) / 1000) * SPEED;
+      last = now;
+      draw();
+    };
+    draw();
+    if (!still) frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  // resting on a model stops the ball so it can be read
+  const point = (e: React.PointerEvent<SVGSVGElement>) => {
+    lean(e);
+    const node = (e.target as Element).closest<SVGGElement>(".mnode");
+    hover.current = node ? Number(node.dataset.k) : -1;
+  };
 
   return (
-    <svg className="net" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="TrendX neural network with 39 models">
+    <svg className="net" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="TrendX neural core: 39 models on a turning ball" onPointerMove={point} onPointerLeave={(e) => { hover.current = -1; rest(e); }}>
       <defs>
         <radialGradient id="coreGlow">
-          <stop offset="0" stopColor="#39ff6a" stopOpacity=".62" />
-          <stop offset=".24" stopColor="#00c853" stopOpacity=".42" />
-          <stop offset=".58" stopColor="#00c853" stopOpacity=".14" />
+          <stop offset="0" stopColor="#39ff6a" stopOpacity=".3" />
+          <stop offset=".5" stopColor="#00c853" stopOpacity=".12" />
           <stop offset="1" stopColor="#00c853" stopOpacity="0" />
         </radialGradient>
+        <linearGradient id="holoBeam" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0" stopColor="#39ff6a" stopOpacity=".4" />
+          <stop offset=".65" stopColor="#35e0ff" stopOpacity=".09" />
+          <stop offset="1" stopColor="#35e0ff" stopOpacity="0" />
+        </linearGradient>
       </defs>
-      <circle className="coreglow" cx={CORE.x} cy={CORE.y} r="250" fill="url(#coreGlow)" />
+      <circle className="coreglow" cx={BALL.x} cy={BALL.y} r={BALL.r + 40} fill="url(#coreGlow)" />
+      <g className="projector">
+        <polygon fill="url(#holoBeam)" points={`${BALL.x - 30},${PAD_Y} ${BALL.x + 30},${PAD_Y} ${BALL.x + 150},${BALL.y + 200} ${BALL.x - 150},${BALL.y + 200}`} />
+        <ellipse className="pad" cx={BALL.x} cy={PAD_Y} rx="84" ry="17" /><ellipse className="pad two" cx={BALL.x} cy={PAD_Y} rx="56" ry="12" /><ellipse className="pad core3" cx={BALL.x} cy={PAD_Y} rx="28" ry="6" />
+        {RISE.map((dx, i) => <circle key={dx} className="rise" r={i % 2 ? 1.6 : 2.2}>
+          <animateMotion dur={`${2.6 + (i % 3) * .7}s`} begin={`${i * .45}s`} repeatCount="indefinite" path={`M${BALL.x + dx * .6} ${PAD_Y} L${BALL.x + dx * 2.4} ${BALL.y + 210}`} />
+          <animate attributeName="opacity" values="0;1;.8;0" dur={`${2.6 + (i % 3) * .7}s`} begin={`${i * .45}s`} repeatCount="indefinite" /></circle>)}
+      </g>
       <text className="nh big" x="0" y="14">TRENDX NEURAL CORE</text>
       <text className="nh" x="0" y="114">INPUT LAYER</text>
-      <text className="nh" x="225" y="36">MODEL LAYER</text>
-      <text className="nh yel" x="415" y="36">x2 = DOUBLE LOT</text>
-      <text className="nh redt" x="523" y="36">STOP = PAUSED</text>
+      <text className="nh yel" x="620" y="14">x2 = DOUBLE LOT</text>
+      <text className="nh redt" x="750" y="14">STOP = PAUSED</text>
       <text className="nh" x="777" y="346">OUTPUT</text>
+      <text ref={focus} className="focus" x={BALL.x} y={BALL.y - BALL.r - 34} textAnchor="middle" />
 
-      <g className="edges">{input.map((d, i) => <path key={i} d={d} />)}{output.map((d, i) => <path key={`o${i}`} d={d} />)}
-        <path d={curve(CORE.x + CORE.r, CORE.y, 777, 378)} /><path className="redge" d={curve(CORE.x + CORE.r, CORE.y, 777, 592)} /></g>
+      <g className="edges">{input.map((d, i) => <path key={i} d={d} />)}
+        <path d={curve(lx, ly, 777, 378)} /><path className="redge" d={curve(sx, sy, 777, 592)} /></g>
 
       {FAMILIES.map((name, i) => (
         <g key={name} className="inode">
@@ -45,39 +137,34 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
         </g>
       ))}
 
+      <path ref={back} className="wire back" />
+      <circle className="rimline" cx={BALL.x} cy={BALL.y} r={BALL.r} />
+      <path ref={links} className="links" />
+      <g className="core">
+        <circle className="halo" cx={BALL.x} cy={BALL.y} r={CORE_R + 8} />
+        <circle className="orbit" cx={BALL.x} cy={BALL.y} r={CORE_R + 13} />
+        <circle className="ringc" cx={BALL.x} cy={BALL.y} r={CORE_R} />
+        <text x={BALL.x} y={BALL.y - 3} textAnchor="middle">AI CORE</text>
+        <text className="sub" x={BALL.x} y={BALL.y + 18} textAnchor="middle">{MODEL_NAMES.length} &gt; 1</text>
+      </g>
+      <path ref={front} className="wire" />
+
       {MODEL_NAMES.map((name, k) => {
-        const st = states.get(k + 1) ?? 0, x = modX(k), y = modY(k);
+        const st = states.get(k + 1) ?? 0;
         return (
-          <g key={name} className={`mnode ${st > 0 ? "boost" : st < 0 ? "stop" : ""}`}>
-            <rect x={x} y={y} width={MOD_W} height={MOD_H} rx="13" />
-            <circle cx={x + 11} cy={y + 13} r="3.2" />
-            <text className="code" x={x + 19} y={y + 17}>{modelCode(k + 1)}</text>
-            <text x={x + 58} y={y + 17}>{short(name)}</text>
-            {st !== 0 && <g><rect className="tag" x={x + MOD_W - (st > 0 ? 24 : 36)} y={y - 7} width={st > 0 ? 20 : 34} height="13" rx="6.5" />
-              <text className="tagt" x={x + MOD_W - (st > 0 ? 14 : 19)} y={y + 3} textAnchor="middle">{st > 0 ? "x2" : "STOP"}</text></g>}
+          <g key={name} ref={(el) => { nodes.current[k] = el; }} data-k={k} className={`mnode ${st > 0 ? "boost" : st < 0 ? "stop" : ""}`}>
+            <title>{`${modelCode(k + 1)} ${name}${st > 0 ? " (x2)" : st < 0 ? " (STOP)" : ""}`}</title>
+            <rect x={-NODE_W / 2} y={-NODE_H / 2} width={NODE_W} height={NODE_H} rx={NODE_H / 2} />
+            <text className="code" y="4" textAnchor="middle">{modelCode(k + 1)}</text>
           </g>
         );
       })}
-
-      <g className="core">
-        <circle className="halo" cx={CORE.x} cy={CORE.y} r={CORE.r + 8} />
-        <circle className="orbit" cx={CORE.x} cy={CORE.y} r={CORE.r + 13} />
-        <circle className="orbit two" cx={CORE.x} cy={CORE.y} r={CORE.r + 7} />
-        <circle className="ringc" cx={CORE.x} cy={CORE.y} r={CORE.r} />
-        <text x={CORE.x} y={CORE.y - 3} textAnchor="middle">AI CORE</text>
-        <text className="sub" x={CORE.x} y={CORE.y + 18} textAnchor="middle">{MODEL_NAMES.length} &gt; 1</text>
-      </g>
 
       <g className={`out long ${side > 0 ? "on" : ""}`}><rect x="777" y="358" width="128" height="42" rx="9" /><text x="841" y="384" textAnchor="middle">LONG</text></g>
       <g className={`out short ${side < 0 ? "on" : ""}`}><rect x="777" y="572" width="128" height="42" rx="9" /><text x="841" y="598" textAnchor="middle">SHORT</text></g>
 
       <g className="sparks">
-        {flows.map((k, i) => (
-          <g key={k}>
-            <circle r="2.6"><animateMotion dur={`${2.4 + (i % 4) * 0.5}s`} begin={`${(i * 0.37) % 2}s`} repeatCount="indefinite" path={curve(IN_W, inY(families(k)[0]) + 13, modX(k), modY(k) + MOD_H / 2)} /></circle>
-            <circle r="2.6"><animateMotion dur={`${2 + (i % 3) * 0.6}s`} begin={`${(i * 0.53) % 2}s`} repeatCount="indefinite" path={output[k]} /></circle>
-          </g>
-        ))}
+        {input.map((d, i) => <circle key={i} r="2.6"><animateMotion dur={`${2.4 + (i % 4) * 0.5}s`} begin={`${(i * 0.37) % 2}s`} repeatCount="indefinite" path={d} /></circle>)}
       </g>
     </svg>
   );

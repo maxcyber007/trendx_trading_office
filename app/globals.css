@@ -305,7 +305,31 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 @keyframes gateIn { from { opacity: 0; transform: translateY(22px) scale(.97); } }
 @keyframes gateShake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
 @media (max-width: 420px) { .gate { padding: 28px 22px 24px; } .login h1 { font-size: 32px; } }
-@media (prefers-reduced-motion: reduce) { .sparks, .spark .ball { display: none; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+/* neural core hologram: glass nodes, a projector beam, a turning wire globe; the scan lines stay still */
+.center { position: relative; overflow: hidden; perspective: 1500px; }
+.center::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(120, 255, 200, .05) 0 1px, transparent 1px 4px); -webkit-mask: radial-gradient(75% 75% at 62% 54%, #000 30%, transparent); mask: radial-gradient(75% 75% at 62% 54%, #000 30%, transparent); }
+.net { transform: rotateX(calc(3deg + var(--rx, 0deg))) rotateY(var(--ry, 0deg)) scale(.97); transform-origin: 50% 55%; transition: transform .3s ease-out; animation: holoFlicker 7s steps(1) infinite; }
+.nh.big { fill: #d6ffe9; filter: drop-shadow(2px 0 0 rgba(53, 224, 255, .55)) drop-shadow(-2px 0 0 rgba(255, 70, 200, .28)); animation: holoGlitch 8s steps(1) infinite; }
+.edges path { stroke: #2bd08a; }
+.inode rect { fill: rgba(5, 34, 28, .42); stroke: #35e0c0; stroke-opacity: .8; }
+.mnode rect { stroke-opacity: .9; }
+.out rect { fill: rgba(3, 30, 20, .4); } .out.short rect { fill: rgba(80, 12, 24, .42); }
+.core .ringc { fill: #020a06; }
+.wire { fill: none; stroke: #5cf5ae; stroke-width: .8; opacity: .55; } .wire.back { stroke: #2bd08a; stroke-width: .6; opacity: .2; }
+.rimline { fill: none; stroke: var(--neon); stroke-width: 1.2; opacity: .55; filter: drop-shadow(0 0 5px var(--neon)); }
+.links { fill: none; stroke: var(--neon); stroke-width: .5; opacity: .28; }
+.net .mnode { cursor: pointer; } .mnode rect { fill: rgba(3, 30, 20, .78); } .mnode.stop > rect { fill: rgba(80, 12, 24, .82); }
+.mnode.boost > rect, .mnode.stop > rect { animation: none; }
+.mnode .code { font-size: 12px; }
+.focus { fill: #d6ffe9; font-size: 15px; font-weight: 700; letter-spacing: .04em; }
+.projector .pad { fill: rgba(57, 255, 106, .05); stroke: var(--neon); stroke-width: 1.2; transform-box: fill-box; transform-origin: center; animation: padPulse 2.8s ease-in-out infinite; }
+.projector .pad.two { stroke: var(--cyan); animation-delay: .35s; } .projector .pad.core3 { fill: rgba(57, 255, 106, .42); stroke-width: 2; animation-delay: .7s; }
+.projector .rise { fill: #baffd8; }
+.core .sub { fill: #d6ffe9; }
+@keyframes holoFlicker { 0%, 100% { opacity: 1; } 91% { opacity: .9; } 92% { opacity: 1; } 95% { opacity: .84; } 96% { opacity: 1; } }
+@keyframes holoGlitch { 0%, 100% { transform: none; } 88% { transform: translateX(3px) skewX(-8deg); } 89% { transform: translateX(-2px); } 90% { transform: none; } }
+@keyframes padPulse { 50% { transform: scale(1.1); opacity: .65; } }
+@media (prefers-reduced-motion: reduce) { .sparks, .spark .ball, .projector .rise { display: none; } *, *::before, *::after { animation: none !important; transition: none !important; } }
 /* wide screens: one screen like the MT5 panel; a column taller than the screen scrolls by itself */
 @media (min-width: 1180px) {
   .page { height: 100vh; overflow: hidden; }
