@@ -5,7 +5,8 @@ const W = 910, H = 860, IN_W = 172, BALL = { x: 468, y: 418, r: 272 }, CORE_R = 
 const PAD_Y = 772, RISE = [-44, -26, -9, 12, 30, 47], NODE_W = 52, NODE_H = 20;
 // LONG and SHORT sit evenly above and below the middle of the ball
 const OUT_X = 777, OUT_W = 128, OUT_H = 42, LONG_Y = BALL.y - 70, SHORT_Y = BALL.y + 70;
-const inY = (i: number) => 124 + i * 56.4;
+// the gap under the title matches the gap under the last input
+const IN_H = 26, IN_TOP = 72, IN_LAST = 800.8, inY = (i: number) => IN_TOP + (i * (IN_LAST - IN_TOP)) / (FAMILIES.length - 1);
 const curve = (x1: number, y1: number, x2: number, y2: number) => `M${x1} ${y1} C${(x1 + x2) / 2} ${y1} ${(x1 + x2) / 2} ${y2} ${x2} ${y2}`;
 
 type V = [number, number, number];
@@ -122,7 +123,7 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
           <animate attributeName="opacity" values="0;1;.8;0" dur={`${2.6 + (i % 3) * .7}s`} begin={`${i * .45}s`} repeatCount="indefinite" /></circle>)}
       </g>
       <text className="nh big" x="0" y="14">TRENDX NEURAL CORE</text>
-      <text className="nh" x="0" y="114">INPUT LAYER</text>
+      <text className="nh" x="0" y={inY(0) - 10}>INPUT LAYER</text>
       <text className="nh yel" x="620" y="14">x2 = DOUBLE LOT</text>
       <text className="nh redt" x="750" y="14">STOP = PAUSED</text>
       <text className="nh" x={OUT_X} y={LONG_Y - OUT_H / 2 - 12}>OUTPUT</text>
@@ -133,7 +134,7 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
 
       {FAMILIES.map((name, i) => (
         <g key={name} className="inode">
-          <rect y={inY(i)} width={IN_W} height="26" rx="13" />
+          <rect y={inY(i)} width={IN_W} height={IN_H} rx={IN_H / 2} />
           <circle cx="12" cy={inY(i) + 13} r="3.5" />
           <text x="22" y={inY(i) + 17}>{name}</text>
           <text className="cnt" x={IN_W - 10} y={inY(i) + 17} textAnchor="end">{count[i]}</text>
