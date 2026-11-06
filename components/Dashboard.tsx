@@ -289,7 +289,7 @@ export default function Dashboard() {
       </main>
       <footer className="status"><span className="dot" /><b>TrendX Ultimate AI Pro</b>
         <span>Login : {account.login}{account.is_demo ? " (Demo)" : ""}</span>
-        <span className="acct" title={account.name ?? ""}>Account : {account.name || "-"}</span><span className="acct" title={account.company}>Broker : {account.company || "-"}</span><span className="acct" title={account.server}>Server : {account.server}</span>
+        <span className="acct" title={account.company}>Broker : {account.company || "-"}</span><span className="acct" title={account.server}>Server : {account.server}</span>
         <span>Server Time : {state?.server_time?.replaceAll("-", ".") ?? "-"}</span><span className={state && state.age > 30 ? "neg" : ""}>Updated : {state ? `${state.age}s ago` : "-"}</span>{error && <span className="neg">{error}</span>}
         <button type="button" className="logout" onClick={logout}><Logout /> Logout</button></footer>
     </div>
