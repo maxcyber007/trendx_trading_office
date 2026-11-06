@@ -8,4 +8,4 @@ export async function proxy(req: NextRequest) {
   return NextResponse.redirect(new URL("/login", req.url));
 }
 
-export const config = { matcher: ["/((?!login|api/login|api/ingest|_next|favicon.ico).*)"] };
+export const config = { matcher: ["/((?!login|api/login|api/ingest|_next|favicon.ico|icon.svg).*)"] };
