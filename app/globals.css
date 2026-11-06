@@ -300,6 +300,13 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .gate button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 30px rgba(57, 255, 106, .75); }
 .gate button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .gate button:disabled { cursor: wait; opacity: .72; }
+.gate label.remember { position: relative; justify-self: center; display: inline-flex; align-items: center; gap: 10px; margin: 16px 0 0; cursor: pointer; color: #c9e8d3; font-size: 14px; }
+.remember input { position: absolute; width: 1px; height: 1px; padding: 0; opacity: 0; }
+.remember i { position: relative; flex: none; width: 38px; height: 20px; border: 1px solid #5d7f68; border-radius: 12px; background: rgba(2, 10, 6, .82); transition: border-color .2s, box-shadow .2s; }
+.remember i::after { content: ""; position: absolute; left: 2px; top: 2px; width: 14px; height: 14px; border-radius: 50%; background: #7fa58a; transition: transform .2s, background .2s; }
+.remember input:checked + i { border-color: var(--neon); box-shadow: 0 0 10px rgba(57, 255, 106, .45); }
+.remember input:checked + i::after { transform: translateX(18px); background: var(--neon); }
+.remember input:focus-visible + i { outline: 2px solid #fff; outline-offset: 2px; }
 @keyframes orbA { to { transform: translate(16vmax, 12vmax); } }
 @keyframes orbB { to { transform: translate(-14vmax, -12vmax); } }
 @keyframes floorRun { to { transform: rotateX(68deg) translateY(64px); } }

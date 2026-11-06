@@ -1,11 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Exo_2, Orbitron } from "next/font/google";
 import LoginBackdrop from "@/components/LoginBackdrop";
 import { Logo } from "@/components/icons";
 
 const display = Orbitron({ subsets: ["latin"], weight: ["600", "800"], variable: "--font-display" });
 const text = Exo_2({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-text" });
+const SAVED = "trendx_saved_login";
+// browser storage can be blocked: the page then simply starts empty
+const saved = () => { try { return localStorage.getItem(SAVED) ?? ""; } catch { return ""; } };
+const keep = (value: string) => { try { if (value) localStorage.setItem(SAVED, value); else localStorage.removeItem(SAVED); } catch {} };
 
 export default function Login() {
   const [login, setLogin] = useState("");
@@ -14,6 +18,12 @@ export default function Login() {
   const [error, setError] = useState("");
   const [tries, setTries] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [remember, setRemember] = useState(false);
+
+  useEffect(() => {
+    const value = saved();
+    if (value) { setLogin(value); setRemember(true); }
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -21,7 +31,7 @@ export default function Login() {
     const fail = (message: string) => { setError(message); setTries((n) => n + 1); setBusy(false); };
     try {
       const r = await fetch("/api/login", { method: "POST", body: JSON.stringify({ login, server }) });
-      if (r.ok) { location.href = "/"; return; }
+      if (r.ok) { keep(remember ? login : ""); location.href = "/"; return; }
       if (r.status === 409) {
         const { servers: list } = await r.json();
         setServers(list); setServer(list[0]); setBusy(false);
@@ -47,6 +57,7 @@ export default function Login() {
         </>}
         {error && <p className="fail" role="alert">{error}</p>}
         <button type="submit" disabled={busy}>{busy ? "Signing in..." : "Sign In"}</button>
+        <label className="remember"><input type="checkbox" role="switch" checked={remember} onChange={(e) => { setRemember(e.target.checked); if (!e.target.checked) keep(""); }} /><i />Remember account number</label>
       </form>
     </main>
   );
