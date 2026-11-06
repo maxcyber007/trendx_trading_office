@@ -232,7 +232,7 @@ export default function Dashboard() {
           <header className="brand">
             <span className="logo"><Logo /></span>
             <div><h1>TrendX <em>Ultimate AI Pro</em></h1><p>Smart Trading &nbsp;• Smarter Decisions</p></div>
-            <span className="ai">AI</span>
+            <span className="ai"><AiChip /></span>
           </header>
 
           <div className="row4">

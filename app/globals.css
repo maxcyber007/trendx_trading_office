@@ -32,7 +32,7 @@ select, input { background: var(--card); color: var(--text); border: 1px solid v
 .brand em { color: var(--neon); font-weight: 700; }
 .brand p { color: var(--dim); font-size: 12px; }
 .logo { width: 42px; height: 42px; display: grid; place-items: center; background: #0d2c18; border-radius: 8px; color: var(--neon); }
-.ai { margin-left: auto; width: 52px; height: 46px; display: grid; place-items: center; border: 2px solid var(--neon); border-radius: 8px; color: var(--neon); font-weight: 800; font-size: 22px; box-shadow: 0 0 8px rgba(57,255,106,.35); }
+.ai { margin-left: auto; width: 52px; height: 46px; display: grid; place-items: center; color: var(--text); } .ai svg { width: 46px; height: 46px; }
 .row4 { display: grid; grid-template-columns: 1.95fr 1fr 1fr 1fr; gap: 6px; }
 .row3 { display: grid; grid-template-columns: 1.7fr 1.3fr 1.3fr; gap: 6px; }
 .stat { display: flex; flex-direction: column; gap: 1px; }
@@ -171,7 +171,7 @@ body::before { content: ""; position: fixed; inset: -80px; z-index: -1; pointer-
 .card, .chip { transition: border-color .25s, box-shadow .25s, transform .25s; }
 .card:hover, .chip:hover { border-color: var(--neon); box-shadow: 0 0 14px rgba(57, 255, 106, .24); transform: translateY(-1px); }
 .brand em { background: linear-gradient(90deg, var(--neon), var(--neon), #c9ffdb, var(--neon), var(--neon)) 0 0 / 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: textFlow 4.5s linear infinite; }
-.ai, .logo { animation: aiPulse 2.6s ease-in-out infinite; }
+.logo { animation: aiPulse 2.6s ease-in-out infinite; }
 .run h3.pos .ico, .chip .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .live, .dot { animation: dotBlink 1.3s ease-in-out infinite; }
 .ring .fill { animation: ringDraw 1.2s ease-out .25s backwards; }
