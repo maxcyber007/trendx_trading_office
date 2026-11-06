@@ -177,7 +177,7 @@ function Monitor({ sys, alive }: { sys?: Sys; alive: boolean }) {
         <Meter label={`DASHBOARD CPU  (1 core / all ${sys.cores})`} value={`${sys.cpu.toFixed(1)}%  /  ${(sys.cpu / Math.max(1, sys.cores)).toFixed(2)}%`} pct={sys.cpu} />
         <Meter label="FRAME TIME  (avg / peak)" value={`${sys.frame.toFixed(1)} / ${sys.peak.toFixed(1)} ms`} pct={sys.frame} />
         <Meter label={`TERMINAL RAM  (of ${(sys.ram_mb / 1024).toFixed(1)} GB)`} value={`${sys.term_mb} MB  ${((sys.term_mb / Math.max(1, sys.ram_mb)) * 100).toFixed(1)}%`} pct={(sys.term_mb / Math.max(1, sys.ram_mb)) * 100} />
-        <Meter label="EA MEMORY" value={`${sys.ea_mb} MB`} pct={(sys.ea_mb / Math.max(1, sys.term_mb)) * 100} color="cy" />
+        <Meter label="AI MEMORY" value={`${sys.ea_mb} MB`} pct={(sys.ea_mb / Math.max(1, sys.term_mb)) * 100} color="cy" />
         <p className="note">{sys.fps.toFixed(1)} fps &nbsp; neural bg &nbsp; chart redraw not included</p>
       </> : <p className="none">อัปเดต EA V.1.39.1 เพื่อแสดงข้อมูลนี้</p>}
     </section>
