@@ -262,7 +262,7 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .avatar { position: relative; } .avatar::after { border-radius: 8px; padding: 1.5px; animation-duration: 3.5s; }
 .dev b { background: linear-gradient(90deg, var(--text), var(--text), var(--neon), var(--text), var(--text)) 0 0 / 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: sweep 5s linear infinite; }
 .status { overflow: hidden; }
-.status::after { content: ""; position: absolute; left: 0; top: 0; width: 30%; height: 2px; pointer-events: none; background: linear-gradient(90deg, transparent, var(--neon2), var(--neon), var(--cyan)); box-shadow: 0 0 10px var(--neon); animation: statusRun 4s linear infinite; }
+.status::after { content: ""; position: absolute; left: 0; top: 0; width: 30%; height: 1px; pointer-events: none; background: linear-gradient(90deg, transparent, var(--neon2), var(--neon), var(--cyan)); box-shadow: 0 0 10px var(--neon); animation: statusRun 8s linear infinite; }
 @keyframes beamSpin { to { --beam: 360deg; } }
 @keyframes statusRun { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
 @keyframes sweep { to { background-position: -200% 0; } }
