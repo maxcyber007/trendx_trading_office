@@ -175,42 +175,24 @@ function Monitor({ sys, alive }: { sys?: Sys; alive: boolean }) {
 }
 
 export default function Dashboard() {
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [id, setId] = useState("");
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState("");
-  const [loaded, setLoaded] = useState(false);
-
-  // a failed load is retried; only a successful empty list means no account has reported yet
-  useEffect(() => {
-    let live = true, timer: ReturnType<typeof setTimeout>;
-    const load = () => fetch("/api/accounts", { cache: "no-store" }).then((r) => { if (!r.ok) throw new Error(); return r.json(); }).then((a: Account[]) => {
-      if (!live) return;
-      setAccounts(a); setLoaded(true); setError("");
-      const saved = localStorage.getItem("trendx_account");
-      setId(a.some((x) => x.id === saved) ? saved! : a[0]?.id ?? "");
-    }).catch(() => { if (live) { setError("กำลังเชื่อมต่อฐานข้อมูลใหม่..."); timer = setTimeout(load, 3000); } });
-    load();
-    return () => { live = false; clearTimeout(timer); };
-  }, []);
 
   useEffect(() => {
-    if (!id) return;
-    localStorage.setItem("trendx_account", id);
     let live = true;
-    const load = () => fetch(`/api/dashboard?account=${id}`, { cache: "no-store" }).then((r) => { if (!r.ok) throw new Error(); return r.json(); })
-      .then((d) => { if (live) { setData(d); setError(""); } }).catch(() => live && setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้"));
+    const load = () => fetch("/api/dashboard", { cache: "no-store" }).then((r) => {
+      if (r.status === 401) { location.href = "/login"; return null; }
+      if (!r.ok) throw new Error();
+      return r.json();
+    }).then((d) => { if (live && d) { setData(d); setError(""); } }).catch(() => live && setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้"));
     load();
     const t = setInterval(load, 3000);
     return () => { live = false; clearInterval(t); };
-  }, [id]);
+  }, []);
 
   const logout = () => fetch("/api/login", { method: "DELETE" }).then((r) => { if (!r.ok) throw new Error(); location.href = "/login"; }).catch(() => setError("ออกจากระบบไม่สำเร็จ"));
 
-  if (!loaded) return <main className="empty">{error || "Loading...."}</main>;
-  if (error && !data) return <main className="empty">{error}</main>;
-  if (!accounts.length) return <main className="empty">ยังไม่มีบัญชีส่งข้อมูลเข้ามา เปิด TrendX Cloud Bridge ใน MT5 ก่อน</main>;
-  if (!data?.account) return <main className="empty">Loading....</main>;
+  if (!data) return <main className="empty">{error || "Loading...."}</main>;
 
   const { account, state, last30 } = data;
   const ea = state?.ea_state;
@@ -306,9 +288,7 @@ export default function Dashboard() {
         </div>
       </main>
       <footer className="status"><span className="dot" /><b>TrendX Ultimate AI Pro</b>
-        <select aria-label="เลือกบัญชี" value={id} onChange={(e) => setId(e.target.value)}>
-          {accounts.map((a) => <option key={a.id} value={a.id}>{a.login}{a.is_demo ? " (Demo)" : ""}</option>)}
-        </select>
+        <span>Login : {account.login}{account.is_demo ? " (Demo)" : ""}</span>
         <span className="acct" title={account.name ?? ""}>Account : {account.name || "-"}</span><span className="acct" title={account.company}>Broker : {account.company || "-"}</span><span className="acct" title={account.server}>Server : {account.server}</span>
         <span>Server Time : {state?.server_time?.replaceAll("-", ".") ?? "-"}</span><span className={state && state.age > 30 ? "neg" : ""}>Updated : {state ? `${state.age}s ago` : "-"}</span>{error && <span className="neg">{error}</span>}
         <button type="button" className="logout" onClick={logout}><Logout /> Logout</button></footer>

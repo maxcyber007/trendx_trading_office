@@ -26,7 +26,6 @@ Import โฟลเดอร์ `trendx_trading_office` เป็นโปรเ
 |---|---|
 | `DATABASE_URL` | connection string ของ PostgreSQL |
 | `INGEST_API_KEY` | ข้อความสุ่มยาวๆ ใช้เป็น `Cloud_Key` ของ Service |
-| `DASHBOARD_PASSWORD` | รหัสผ่านเข้าเว็บ |
 | `SESSION_SECRET` | ข้อความสุ่มยาวๆ อีกชุด |
 
 ## 3. ตั้งค่า MT5 (ทำทุกบัญชี)

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { COOKIE, validSession } from "@/lib/session";
+import { COOKIE, sessionAccount } from "@/lib/session";
 
 // every page and API needs the login, except the login itself and the key-protected ingest
 export async function proxy(req: NextRequest) {
-  if (await validSession(req.cookies.get(COOKIE)?.value)) return NextResponse.next();
+  if (await sessionAccount(req.cookies.get(COOKIE)?.value)) return NextResponse.next();
   if (req.nextUrl.pathname.startsWith("/api/")) return NextResponse.json({ error: "login required" }, { status: 401 });
   return NextResponse.redirect(new URL("/login", req.url));
 }
