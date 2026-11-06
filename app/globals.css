@@ -368,7 +368,7 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
   .layout { grid-template-columns: minmax(0, 1fr); padding: 8px 16px; }
   .left, .center, .right { grid-column: 1; grid-row: auto; }
   .center { display: none; }
-  .status { position: static; }
+  .status { position: relative; }
 }
 @media (max-width: 560px) {
   .row4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .run, .row4 > :last-child { grid-column: 1 / -1; }
