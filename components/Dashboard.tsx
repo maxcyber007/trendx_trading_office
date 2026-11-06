@@ -32,6 +32,7 @@ function Ring({ value }: { value: number }) {
     <svg className="ring" viewBox="0 0 76 76" role="img" aria-label={`Win rate ${value}%`}>
       <circle cx="38" cy="38" r="30" className="track" />
       <circle cx="38" cy="38" r="30" className="fill" strokeDasharray={`${(value / 100) * c} ${c}`} transform="rotate(-90 38 38)" />
+      <circle cx="38" cy="38" r="30" className="run" pathLength={100} />
       <text x="38" y="44" textAnchor="middle">{value}%</text>
     </svg>
   );
@@ -42,7 +43,9 @@ function Spark({ daily }: { daily: Data["daily"] }) {
   if (pts.length < 2) return <svg className="spark" />;
   const lo = Math.min(...pts, 0), hi = Math.max(...pts, 1);
   const xy = pts.map((v, i) => `${(i / (pts.length - 1)) * 200},${46 - ((v - lo) / (hi - lo)) * 42}`);
-  return <svg className="spark" viewBox="0 0 200 48" preserveAspectRatio="none" aria-hidden="true"><polygon points={`0,48 ${xy.join(" ")} 200,48`} /><polyline pathLength={1} points={xy.join(" ")} /></svg>;
+  return <svg className="spark" viewBox="0 0 200 48" preserveAspectRatio="none" aria-hidden="true"><polygon points={`0,48 ${xy.join(" ")} 200,48`} /><polyline pathLength={1} points={xy.join(" ")} />
+    {/* the chart stretches to fit, so the ball is a round stroke cap that keeps its shape */}
+    <g className="ball"><animateMotion dur="4s" repeatCount="indefinite" path={`M${xy.join(" L")}`} /><path className="halo" d="M0 0h.01" /><path d="M0 0h.01" /></g></svg>;
 }
 
 // day amounts are shortened to fit the cell, as on the EA panel

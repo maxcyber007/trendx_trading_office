@@ -227,6 +227,10 @@ tbody tr { animation: rowIn .45s ease-out .35s backwards; } .top1 { animation: r
 .left .card:nth-child(2n)::after, .left .chip:nth-child(2n)::after { animation-delay: 1.2s; } .left .card:nth-child(3n)::after, .left .chip:nth-child(3n)::after { animation-delay: 2.2s; }
 .stat strong, .dd strong { animation: figureGlow 3.2s ease-in-out infinite; }
 .ring .fill { filter: drop-shadow(0 0 4px var(--neon)); }
+.ring .run { stroke: #d6ffe3; stroke-width: 3.5; stroke-linecap: round; stroke-dasharray: 9 91; transform-box: fill-box; transform-origin: center; filter: drop-shadow(0 0 4px var(--neon)); animation: spin 2.8s linear infinite; }
+.spark { overflow: visible; }
+.spark .ball path { fill: none; stroke: #eafff0; stroke-width: 5; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.spark .ball .halo { stroke: var(--neon); stroke-width: 12; opacity: .38; }
 @keyframes edgeRun { to { left: 110%; } }
 @keyframes figureGlow { 50% { text-shadow: 0 0 9px rgba(57, 255, 106, .5); } }
 @keyframes barRise { from { transform: scaleY(0); opacity: .2; } to { transform: scaleY(1); opacity: 1; } }
@@ -301,7 +305,7 @@ tbody tr { animation: rowIn .45s ease-out .35s backwards; } .top1 { animation: r
 @keyframes gateIn { from { opacity: 0; transform: translateY(22px) scale(.97); } }
 @keyframes gateShake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
 @media (max-width: 420px) { .gate { padding: 28px 22px 24px; } .login h1 { font-size: 32px; } }
-@media (prefers-reduced-motion: reduce) { .sparks { display: none; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .sparks, .spark .ball { display: none; } *, *::before, *::after { animation: none !important; transition: none !important; } }
 /* wide screens: one screen like the MT5 panel; a column taller than the screen scrolls by itself */
 @media (min-width: 1180px) {
   .page { height: 100vh; overflow: hidden; }
