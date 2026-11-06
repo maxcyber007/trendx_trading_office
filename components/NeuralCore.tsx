@@ -132,13 +132,14 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
       <g className="uplight">
         <polygon className="fan" fill="url(#upGlow)" points={`${BALL.x - 250},${EDGE_Y} ${BALL.x + 250},${EDGE_Y} ${BALL.x + 84},${PAD_Y} ${BALL.x - 84},${PAD_Y}`} />
         <rect className="edge" y={EDGE_Y} width={W} height="3" fill="url(#edgeGlow)" />
+        {[0, 1, 2].map((i) => <ellipse key={i} className={`wave w${i}`} cx={BALL.x} cy={EDGE_Y} rx="62" ry="10" />)}
         {STREAKS.map((dx, i) => <rect key={dx} className="streak" x="-1" y="-16" width="2" height="32" rx="1">
           <animateMotion dur={`${1.1 + (i % 3) * .3}s`} begin={`${(i * .23) % 1}s`} repeatCount="indefinite" path={`M${BALL.x + dx} ${EDGE_Y} L${BALL.x + dx * .42} ${PAD_Y}`} />
           <animate attributeName="opacity" values="0;1;0" dur={`${1.1 + (i % 3) * .3}s`} begin={`${(i * .23) % 1}s`} repeatCount="indefinite" /></rect>)}
       </g>
       <g className="projector">
         <polygon fill="url(#holoBeam)" points={`${BALL.x - 30},${PAD_Y} ${BALL.x + 30},${PAD_Y} ${BALL.x + 150},${BALL.y + 200} ${BALL.x - 150},${BALL.y + 200}`} />
-        <ellipse className="pad" cx={BALL.x} cy={PAD_Y} rx="84" ry="17" /><ellipse className="pad two" cx={BALL.x} cy={PAD_Y} rx="56" ry="12" /><ellipse className="pad core3" cx={BALL.x} cy={PAD_Y} rx="28" ry="6" />
+        <ellipse className="pad" cx={BALL.x} cy={PAD_Y} rx="84" ry="17" /><ellipse className="pad two" cx={BALL.x} cy={PAD_Y} rx="56" ry="12" /><ellipse className="pad core3" cx={BALL.x} cy={PAD_Y} rx="28" ry="6" /><ellipse className="hit" cx={BALL.x} cy={PAD_Y} rx="84" ry="17" />
         {RISE.map((dx, i) => <circle key={dx} className="rise" r={i % 2 ? 1.6 : 2.2}>
           <animateMotion dur={`${2.6 + (i % 3) * .7}s`} begin={`${i * .45}s`} repeatCount="indefinite" path={`M${BALL.x + dx * .6} ${PAD_Y} L${BALL.x + dx * 2.4} ${BALL.y + 210}`} />
           <animate attributeName="opacity" values="0;1;.8;0" dur={`${2.6 + (i % 3) * .7}s`} begin={`${i * .45}s`} repeatCount="indefinite" /></circle>)}

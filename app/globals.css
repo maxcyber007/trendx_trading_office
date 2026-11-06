@@ -262,9 +262,15 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .avatar { position: relative; } .avatar::after { border-radius: 8px; padding: 1.5px; animation-duration: 3.5s; }
 .dev b { background: linear-gradient(90deg, var(--text), var(--text), var(--neon), var(--text), var(--text)) 0 0 / 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: sweep 5s linear infinite; }
 .status { overflow: hidden; }
-.status::after { content: ""; position: absolute; left: 0; top: 0; width: 30%; height: 1px; pointer-events: none; background: linear-gradient(90deg, transparent, var(--neon2), var(--neon), var(--cyan)); box-shadow: 0 0 10px var(--neon); animation: statusRun 8s linear infinite; }
+.status { --meet: 50%; }
+.status::before, .status::after { content: ""; position: absolute; top: 0; width: 150px; height: 1px; pointer-events: none; box-shadow: 0 0 8px var(--neon); }
+.status::before { left: -150px; background: linear-gradient(90deg, transparent, var(--neon2), var(--neon), #eafff0); animation: statusLeft 7s linear infinite; }
+.status::after { right: -150px; background: linear-gradient(270deg, transparent, var(--neon2), var(--neon), #eafff0); animation: statusRight 7s linear infinite; }
 @keyframes beamSpin { to { --beam: 360deg; } }
-@keyframes statusRun { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+@keyframes statusLeft { 0% { left: -150px; opacity: 0; } 4% { opacity: 1; } 46% { left: calc(var(--meet) - 150px); opacity: 1; } 50%, 100% { left: calc(var(--meet) - 150px); opacity: 0; } }
+@keyframes statusRight { 0% { right: -150px; opacity: 0; } 4% { opacity: 1; } 46% { right: calc(100% - var(--meet) - 150px); opacity: 1; } 50%, 100% { right: calc(100% - var(--meet) - 150px); opacity: 0; } }
+@keyframes holoWave { 0%, 46% { opacity: 0; transform: translateY(0) scale(.25); } 49% { opacity: 1; } 68% { opacity: .85; transform: translateY(-83px) scale(1.35); } 73%, 100% { opacity: 0; transform: translateY(-83px) scale(1.35); } }
+@keyframes holoHit { 0%, 68% { opacity: 0; transform: scale(.85); } 71% { opacity: 1; transform: scale(1); } 90%, 100% { opacity: 0; transform: scale(1.55); } }
 @keyframes sweep { to { background-position: -200% 0; } }
 @keyframes medal { 50% { box-shadow: 0 0 9px var(--medal); } }
 @keyframes tickFlash { from { text-shadow: 0 0 14px currentColor; transform: scale(1.06); } }
@@ -337,12 +343,16 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .uplight .edge { filter: drop-shadow(0 0 6px var(--neon)); }
 .uplight .fan { filter: blur(7px); animation: fadeBlink 2s ease-in-out infinite; }
 .uplight .streak { fill: #d6ffe3; }
+.uplight .wave { fill: none; stroke: #eafff0; stroke-width: 1.6; opacity: 0; transform-box: fill-box; transform-origin: center; filter: drop-shadow(0 0 4px var(--neon)); animation: holoWave 7s linear infinite; }
+.uplight .wave.w1 { animation-delay: .22s; } .uplight .wave.w2 { animation-delay: .44s; }
+.projector .hit { fill: none; stroke: #eafff0; stroke-width: 2.2; opacity: 0; transform-box: fill-box; transform-origin: center; filter: drop-shadow(0 0 6px var(--neon)); animation: holoHit 7s linear infinite; }
 @keyframes holoFlicker { 0%, 100% { opacity: 1; } 91% { opacity: .9; } 92% { opacity: 1; } 95% { opacity: .84; } 96% { opacity: 1; } }
 @keyframes holoGlitch { 0%, 100% { transform: none; } 88% { transform: translateX(3px) skewX(-8deg); } 89% { transform: translateX(-2px); } 90% { transform: none; } }
 @keyframes padPulse { 50% { transform: scale(1.1); opacity: .65; } }
 @media (prefers-reduced-motion: reduce) { .sparks, .spark .ball, .projector .rise, .uplight .streak { display: none; } *, *::before, *::after { animation: none !important; transition: none !important; } }
 /* wide screens: one screen like the MT5 panel; a column taller than the screen scrolls by itself */
 @media (min-width: 1180px) {
+  .status { --meet: calc(50% + 95px); }
   .page { height: 100vh; overflow: hidden; }
   .layout { min-height: 0; height: calc(100vh - 26px); align-items: stretch; }
   .left, .right { height: 100%; overflow-y: auto; align-content: start; scrollbar-width: thin; scrollbar-color: var(--edge) transparent; }
@@ -358,6 +368,7 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
   .page { zoom: .72; height: calc(100vh / .72); }
   .layout { height: calc(100vh / .72 - 26px); }
 }
+@media (min-width: 1001px) and (max-width: 1179px) { .status { --meet: calc(50% + 266px); } }
 @media (max-width: 1179px) {
   .layout { grid-template-columns: 505px minmax(0, 1fr); }
   .left { grid-column: 1; grid-row: 1 / span 2; }
