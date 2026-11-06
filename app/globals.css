@@ -62,7 +62,8 @@ dt { color: var(--dim); } dd { margin: 0; }
 .chip small { display: block; color: var(--dim); font-size: 11px; line-height: 1.1; }
 .chip b { font-size: 12px; white-space: nowrap; }
 .scroll { overflow: auto; max-height: 190px; }
-.pos-card { min-height: 90px; }
+.pos-card { height: 104px; display: flex; flex-direction: column; }
+.pos-card .scroll { flex: 1; min-height: 0; max-height: none; scrollbar-width: thin; scrollbar-color: var(--neon2) transparent; }
 table { width: 100%; border-collapse: collapse; font-size: 12px; }
 th { color: var(--dim); font-weight: 500; font-size: 11px; text-align: left; padding: 1px 4px; position: sticky; top: 0; background: var(--card); }
 th.rt { text-align: right; }
