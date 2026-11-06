@@ -244,7 +244,7 @@ export default function Dashboard() {
 
           <div className="row4">
             <section className="card run">
-              <h3 className={eaOn ? "pos" : "neg"}><Power /> {eaOn ? "EA Running" : online ? "EA Offline" : "Terminal Offline"}{eaOn && <i className="live" />}</h3>
+              <h3 className={eaOn ? "pos" : "neg"}><Power /> {eaOn ? "AI Running" : online ? "EA Offline" : "Terminal Offline"}{eaOn && <i className="live" />}</h3>
               <dl><dt>Symbol</dt><dd>: &nbsp;{ea?.symbol ?? "-"}</dd><dt>Timeframe</dt><dd>: &nbsp;H1 (engine)</dd><dt>Magic</dt><dd>: &nbsp;{ea?.magic ?? "-"}xxx</dd></dl>
             </section>
             <section className="card stat"><span className="gold"><Coins /></span><h3>Balance</h3><strong>{money(balance)}</strong><small>{account.currency}</small></section>
