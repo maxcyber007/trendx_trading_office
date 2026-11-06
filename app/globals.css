@@ -342,14 +342,13 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .core .brain { fill: rgba(57, 255, 106, .12); stroke: var(--neon); stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 3px var(--neon)); animation: fadeBlink 2.4s ease-in-out infinite; }
 .uplight .edge { filter: drop-shadow(0 0 6px var(--neon)); }
 .uplight .fan { filter: blur(7px); animation: fadeBlink 2s ease-in-out infinite; }
-.uplight .streak { fill: #d6ffe3; }
 .uplight .wave { fill: none; stroke: #eafff0; stroke-width: 1.6; opacity: 0; transform-box: fill-box; transform-origin: center; filter: drop-shadow(0 0 4px var(--neon)); animation: holoWave 7s linear infinite; }
 .uplight .wave.w1 { animation-delay: .22s; } .uplight .wave.w2 { animation-delay: .44s; }
 .projector .hit { fill: none; stroke: #eafff0; stroke-width: 2.2; opacity: 0; transform-box: fill-box; transform-origin: center; filter: drop-shadow(0 0 6px var(--neon)); animation: holoHit 7s linear infinite; }
 @keyframes holoFlicker { 0%, 100% { opacity: 1; } 91% { opacity: .9; } 92% { opacity: 1; } 95% { opacity: .84; } 96% { opacity: 1; } }
 @keyframes holoGlitch { 0%, 100% { transform: none; } 88% { transform: translateX(3px) skewX(-8deg); } 89% { transform: translateX(-2px); } 90% { transform: none; } }
 @keyframes padPulse { 50% { transform: scale(1.1); opacity: .65; } }
-@media (prefers-reduced-motion: reduce) { .sparks, .spark .ball, .projector .rise, .uplight .streak { display: none; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .sparks, .spark .ball, .projector .rise { display: none; } *, *::before, *::after { animation: none !important; transition: none !important; } }
 /* wide screens: one screen like the MT5 panel; a column taller than the screen scrolls by itself */
 @media (min-width: 1180px) {
   .status { --meet: calc(50% + 95px); }

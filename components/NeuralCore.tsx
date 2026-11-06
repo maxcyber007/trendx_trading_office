@@ -4,7 +4,7 @@ import { FAMILIES, MODEL_FAMILIES, MODEL_NAMES, modelCode } from "@/lib/models";
 const W = 910, H = 860, IN_W = 172, BALL = { x: 468, y: 418, r: 272 }, CORE_R = 56, TILT = .34, SPEED = .22;
 const PAD_Y = 772, RISE = [-44, -26, -9, 12, 30, 47], NODE_W = 52, NODE_H = 20;
 // light shooting up from the bottom edge into the projector
-const EDGE_Y = H - 5, STREAKS = [-170, -118, -70, -26, 22, 66, 122, 174];
+const EDGE_Y = H - 5;
 const BRAIN = "M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18ZM12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18ZM15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4M17.599 6.5a3 3 0 0 0 .399-1.375M6.003 5.125A3 3 0 0 0 6.401 6.5M3.477 10.896a4 4 0 0 1 .585-.396M19.938 10.5a4 4 0 0 1 .585.396M6 18a4 4 0 0 1-1.967-.516M19.967 17.484A4 4 0 0 1 18 18";
 // LONG and SHORT sit evenly above and below the middle of the ball
 const OUT_X = 777, OUT_W = 128, OUT_H = 42, LONG_Y = BALL.y - 70, SHORT_Y = BALL.y + 70;
@@ -133,9 +133,6 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
         <polygon className="fan" fill="url(#upGlow)" points={`${BALL.x - 250},${EDGE_Y} ${BALL.x + 250},${EDGE_Y} ${BALL.x + 84},${PAD_Y} ${BALL.x - 84},${PAD_Y}`} />
         <rect className="edge" y={EDGE_Y} width={W} height="3" fill="url(#edgeGlow)" />
         {[0, 1, 2].map((i) => <ellipse key={i} className={`wave w${i}`} cx={BALL.x} cy={EDGE_Y} rx="62" ry="10" />)}
-        {STREAKS.map((dx, i) => <rect key={dx} className="streak" x="-1" y="-16" width="2" height="32" rx="1">
-          <animateMotion dur={`${1.1 + (i % 3) * .3}s`} begin={`${(i * .23) % 1}s`} repeatCount="indefinite" path={`M${BALL.x + dx} ${EDGE_Y} L${BALL.x + dx * .42} ${PAD_Y}`} />
-          <animate attributeName="opacity" values="0;1;0" dur={`${1.1 + (i % 3) * .3}s`} begin={`${(i * .23) % 1}s`} repeatCount="indefinite" /></rect>)}
       </g>
       <g className="projector">
         <polygon fill="url(#holoBeam)" points={`${BALL.x - 30},${PAD_Y} ${BALL.x + 30},${PAD_Y} ${BALL.x + 150},${BALL.y + 200} ${BALL.x - 150},${BALL.y + 200}`} />
