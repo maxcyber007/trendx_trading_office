@@ -139,7 +139,7 @@ td { padding: 2px 4px; white-space: nowrap; }
 /* neural network */
 .net { width: 100%; height: auto; display: block; }
 .net text { font-family: inherit; }
-.nh { fill: var(--dim); font-size: 12px; font-weight: 600; } .nh.big { font-size: 18px; font-weight: 700; }
+.nh { fill: var(--dim); font-size: 12px; font-weight: 600; }
 .edges path { fill: none; stroke: #1f7a3c; stroke-width: .7; opacity: .5; }
 .edges .redge { stroke: var(--red); }
 .inode rect { fill: #071a10; stroke: #1c8a4a; } .inode circle { fill: var(--cyan); }
@@ -323,7 +323,9 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .center { position: relative; overflow: hidden; perspective: 1500px; }
 .center::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(120, 255, 200, .05) 0 1px, transparent 1px 4px); -webkit-mask: radial-gradient(75% 75% at 62% 54%, #000 30%, transparent); mask: radial-gradient(75% 75% at 62% 54%, #000 30%, transparent); }
 .net { transform: rotateX(calc(3deg + var(--rx, 0deg))) rotateY(var(--ry, 0deg)) scale(.97); transform-origin: 50% 55%; transition: transform .3s ease-out; animation: holoFlicker 7s steps(1) infinite; }
-.nh.big { fill: #d6ffe9; filter: drop-shadow(2px 0 0 rgba(53, 224, 255, .55)) drop-shadow(-2px 0 0 rgba(255, 70, 200, .28)); animation: holoGlitch 8s steps(1) infinite; }
+.net text.title { font-family: var(--font-title), "Segoe UI", sans-serif; font-size: 23.25px; letter-spacing: .07em; stroke: rgba(57, 255, 106, .8); stroke-width: .7; filter: drop-shadow(0 0 8px rgba(57, 255, 106, .7)); animation: holoGlitch 8s steps(1) infinite, titleBreath 3.2s ease-in-out infinite; }
+.titleline { transform-box: fill-box; transform-origin: center; animation: titleLine 5s ease-in-out infinite; }
+.titlegem { fill: #020a06; stroke: var(--neon); stroke-width: 1.4; filter: drop-shadow(0 0 4px var(--neon)); transform-box: fill-box; transform-origin: center; animation: titleGem 5s ease-in-out infinite; }
 .edges path { stroke: #2bd08a; }
 .inode rect { fill: rgba(5, 34, 28, .42); stroke: #35e0c0; stroke-opacity: .8; }
 .mnode rect { stroke-opacity: .9; }
@@ -347,6 +349,9 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .projector .hit { fill: none; stroke: #eafff0; stroke-width: 2.2; opacity: 0; transform-box: fill-box; transform-origin: center; filter: drop-shadow(0 0 6px var(--neon)); animation: holoHit 7s linear infinite; }
 @keyframes holoFlicker { 0%, 100% { opacity: 1; } 91% { opacity: .9; } 92% { opacity: 1; } 95% { opacity: .84; } 96% { opacity: 1; } }
 @keyframes holoGlitch { 0%, 100% { transform: none; } 88% { transform: translateX(3px) skewX(-8deg); } 89% { transform: translateX(-2px); } 90% { transform: none; } }
+@keyframes titleBreath { 0%, 100% { opacity: .78; } 50% { opacity: 1; } }
+@keyframes titleLine { 0%, 100% { transform: scaleX(.55); opacity: .55; } 50% { transform: scaleX(1); opacity: 1; } }
+@keyframes titleGem { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(180deg); } }
 @keyframes padPulse { 50% { transform: scale(1.1); opacity: .65; } }
 @media (prefers-reduced-motion: reduce) { .sparks, .spark .ball, .projector .rise { display: none; } *, *::before, *::after { animation: none !important; transition: none !important; } }
 /* wide screens: one screen like the MT5 panel; a column taller than the screen scrolls by itself */

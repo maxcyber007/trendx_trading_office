@@ -1,5 +1,8 @@
 import { useEffect, useRef } from "react";
+import { Audiowide } from "next/font/google";
 import { FAMILIES, MODEL_FAMILIES, MODEL_NAMES, modelCode } from "@/lib/models";
+
+const space = Audiowide({ subsets: ["latin"], weight: "400", variable: "--font-title" });
 
 const W = 910, H = 860, IN_W = 172, BALL = { x: 468, y: 418, r: 272 }, CORE_R = 56, TILT = .34, SPEED = .22;
 const PAD_Y = 772, RISE = [-44, -26, -9, 12, 30, 47], NODE_W = 52, NODE_H = 20;
@@ -104,7 +107,7 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
   };
 
   return (
-    <svg className="net" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="TrendX neural core: 39 models on a turning ball" onPointerMove={point} onPointerLeave={(e) => { hover.current = -1; rest(e); }}>
+    <svg className={`net ${space.variable}`} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="TrendX neural core: 39 models on a turning ball" onPointerMove={point} onPointerLeave={(e) => { hover.current = -1; rest(e); }}>
       <defs>
         <radialGradient id="coreGlow">
           <stop offset="0" stopColor="#39ff6a" stopOpacity=".3" />
@@ -121,6 +124,20 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
         <linearGradient id="upGlow" x1="0" y1="1" x2="0" y2="0">
           <stop offset="0" stopColor="#39ff6a" stopOpacity=".38" />
           <stop offset="1" stopColor="#39ff6a" stopOpacity=".08" />
+        </linearGradient>
+        <linearGradient id="titleGlow" gradientUnits="userSpaceOnUse" x1="-260" y1="0" x2="60" y2="0">
+          <stop offset="0" stopColor="#39ff6a" stopOpacity=".75" />
+          <stop offset=".42" stopColor="#39ff6a" stopOpacity=".75" />
+          <stop offset=".5" stopColor="#c9ffdb" stopOpacity=".95" />
+          <stop offset=".58" stopColor="#39ff6a" stopOpacity=".75" />
+          <stop offset="1" stopColor="#39ff6a" stopOpacity=".75" />
+          <animate attributeName="x1" values="-260;760;760" keyTimes="0;.55;1" dur="5s" repeatCount="indefinite" />
+          <animate attributeName="x2" values="60;1080;1080" keyTimes="0;.55;1" dur="5s" repeatCount="indefinite" />
+        </linearGradient>
+        <linearGradient id="titleLine">
+          <stop offset="0" stopColor="#39ff6a" stopOpacity="0" />
+          <stop offset=".5" stopColor="#eafff0" />
+          <stop offset="1" stopColor="#39ff6a" stopOpacity="0" />
         </linearGradient>
         <linearGradient id="holoBeam" x1="0" y1="1" x2="0" y2="0">
           <stop offset="0" stopColor="#39ff6a" stopOpacity=".4" />
@@ -141,7 +158,9 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
           <animateMotion dur={`${2.6 + (i % 3) * .7}s`} begin={`${i * .45}s`} repeatCount="indefinite" path={`M${BALL.x + dx * .6} ${PAD_Y} L${BALL.x + dx * 2.4} ${BALL.y + 210}`} />
           <animate attributeName="opacity" values="0;1;.8;0" dur={`${2.6 + (i % 3) * .7}s`} begin={`${i * .45}s`} repeatCount="indefinite" /></circle>)}
       </g>
-      <text className="nh big" x="0" y="14">TRENDX NEURAL CORE</text>
+      <text className="title" x={BALL.x} y="40" textAnchor="middle" fill="url(#titleGlow)">TRENDX AI COMMAND CORE</text>
+      <rect className="titleline" x={BALL.x - 190} y="49" width="380" height="1.6" fill="url(#titleLine)" />
+      <path className="titlegem" d={`M${BALL.x} 45l5 5-5 5-5-5Z`} />
       <text className="nh" x="0" y={inY(0) - 10}>INPUT LAYER</text>
       <text className="nh" x={OUT_X} y={LONG_Y - OUT_H / 2 - 12}>OUTPUT</text>
       <text ref={focus} className="focus" x={BALL.x} y={BALL.y - BALL.r - 34} textAnchor="middle" />
