@@ -157,6 +157,7 @@ td { padding: 2px 4px; white-space: nowrap; }
 .out.short rect { fill: #2a0d12; stroke: var(--red); } .out.short text { fill: var(--red); }
 .out.long.on rect { fill: #0f3a1d; stroke-width: 3; } .out.short.on rect { fill: #4a121a; stroke-width: 3; }
 .sparks circle { fill: var(--neon); filter: drop-shadow(0 0 3px var(--neon)); }
+.sparks circle.red { fill: var(--red); filter: drop-shadow(0 0 3px var(--red)); }
 .empty { min-height: 100vh; display: grid; place-items: center; padding: 16px; text-align: center; color: var(--dim); }
 /* page-wide motion: opacity and transforms only, so the live figures stay readable and cheap to draw */
 body::before { content: ""; position: fixed; inset: -80px; z-index: -1; pointer-events: none; background-image: radial-gradient(circle at 50% 42%, rgba(0, 200, 83, .13), transparent 42%), linear-gradient(rgba(57, 255, 106, .035) 1px, transparent 1px), linear-gradient(90deg, rgba(57, 255, 106, .035) 1px, transparent 1px); background-size: auto, 44px 44px, 44px 44px; animation: gridDrift 18s linear infinite; }

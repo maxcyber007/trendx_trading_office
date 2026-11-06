@@ -3,6 +3,8 @@ import { FAMILIES, MODEL_FAMILIES, MODEL_NAMES, modelCode } from "@/lib/models";
 
 const W = 910, H = 860, IN_W = 172, BALL = { x: 468, y: 418, r: 272 }, CORE_R = 56, TILT = .34, SPEED = .22;
 const PAD_Y = 772, RISE = [-44, -26, -9, 12, 30, 47], NODE_W = 52, NODE_H = 20;
+// LONG and SHORT sit evenly above and below the middle of the ball
+const OUT_X = 777, OUT_W = 128, OUT_H = 42, LONG_Y = BALL.y - 70, SHORT_Y = BALL.y + 70;
 const inY = (i: number) => 124 + i * 56.4;
 const curve = (x1: number, y1: number, x2: number, y2: number) => `M${x1} ${y1} C${(x1 + x2) / 2} ${y1} ${(x1 + x2) / 2} ${y2} ${x2} ${y2}`;
 
@@ -37,7 +39,8 @@ const rest = (e: React.PointerEvent<SVGSVGElement>) => { e.currentTarget.style.r
 export default function NeuralCore({ states, side }: { states: Map<number, number>; side: number }) {
   const count = FAMILIES.map((_, f) => MODEL_FAMILIES.filter((x) => x === f).length);
   const input = FAMILIES.map((_, i) => { const [x, y] = rim(inY(i) + 13, -1); return curve(IN_W, inY(i) + 13, x, y); });
-  const [lx, ly] = rim(378, 1), [sx, sy] = rim(592, 1);
+  const [lx, ly] = rim(BALL.y - 170, 1), [sx, sy] = rim(BALL.y + 170, 1);
+  const toLong = curve(lx, ly, OUT_X, LONG_Y), toShort = curve(sx, sy, OUT_X, SHORT_Y);
   const front = useRef<SVGPathElement>(null), back = useRef<SVGPathElement>(null), links = useRef<SVGPathElement>(null);
   const nodes = useRef<(SVGGElement | null)[]>([]), focus = useRef<SVGTextElement>(null), hover = useRef(-1);
 
@@ -122,11 +125,11 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
       <text className="nh" x="0" y="114">INPUT LAYER</text>
       <text className="nh yel" x="620" y="14">x2 = DOUBLE LOT</text>
       <text className="nh redt" x="750" y="14">STOP = PAUSED</text>
-      <text className="nh" x="777" y="346">OUTPUT</text>
+      <text className="nh" x={OUT_X} y={LONG_Y - OUT_H / 2 - 12}>OUTPUT</text>
       <text ref={focus} className="focus" x={BALL.x} y={BALL.y - BALL.r - 34} textAnchor="middle" />
 
       <g className="edges">{input.map((d, i) => <path key={i} d={d} />)}
-        <path d={curve(lx, ly, 777, 378)} /><path className="redge" d={curve(sx, sy, 777, 592)} /></g>
+        <path d={toLong} /><path className="redge" d={toShort} /></g>
 
       {FAMILIES.map((name, i) => (
         <g key={name} className="inode">
@@ -160,11 +163,13 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
         );
       })}
 
-      <g className={`out long ${side > 0 ? "on" : ""}`}><rect x="777" y="358" width="128" height="42" rx="9" /><text x="841" y="384" textAnchor="middle">LONG</text></g>
-      <g className={`out short ${side < 0 ? "on" : ""}`}><rect x="777" y="572" width="128" height="42" rx="9" /><text x="841" y="598" textAnchor="middle">SHORT</text></g>
+      <g className={`out long ${side > 0 ? "on" : ""}`}><rect x={OUT_X} y={LONG_Y - OUT_H / 2} width={OUT_W} height={OUT_H} rx="9" /><text x={OUT_X + OUT_W / 2} y={LONG_Y + 5} textAnchor="middle">LONG</text></g>
+      <g className={`out short ${side < 0 ? "on" : ""}`}><rect x={OUT_X} y={SHORT_Y - OUT_H / 2} width={OUT_W} height={OUT_H} rx="9" /><text x={OUT_X + OUT_W / 2} y={SHORT_Y + 5} textAnchor="middle">SHORT</text></g>
 
       <g className="sparks">
         {input.map((d, i) => <circle key={i} r="2.6"><animateMotion dur={`${2.4 + (i % 4) * 0.5}s`} begin={`${(i * 0.37) % 2}s`} repeatCount="indefinite" path={d} /></circle>)}
+        <circle r="2.6"><animateMotion dur="2.4s" repeatCount="indefinite" path={toLong} /></circle>
+        <circle className="red" r="2.6"><animateMotion dur="2.4s" begin="1.2s" repeatCount="indefinite" path={toShort} /></circle>
       </g>
     </svg>
   );
