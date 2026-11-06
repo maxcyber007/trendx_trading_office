@@ -1,4 +1,5 @@
 :root {
+  color-scheme: dark;
   --bg: #040806; --card: #08120d; --edge: #1e5a2e; --neon: #39ff6a; --neon2: #00c853;
   --dim: #7fa58a; --text: #e8f5ec; --red: #ff4d5e; --yellow: #ffc94a; --cyan: #35e0ff;
 }
