@@ -269,11 +269,8 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 @keyframes beamSpin { to { --beam: 360deg; } }
 @keyframes statusLeft { 0% { left: -150px; opacity: 0; } 4% { opacity: 1; } 46% { left: calc(var(--meet) - 150px); opacity: 1; } 50%, 100% { left: calc(var(--meet) - 150px); opacity: 0; } }
 @keyframes statusRight { 0% { right: -150px; opacity: 0; } 4% { opacity: 1; } 46% { right: calc(100% - var(--meet) - 150px); opacity: 1; } 50%, 100% { right: calc(100% - var(--meet) - 150px); opacity: 0; } }
-@keyframes holoWave { 0%, 46% { opacity: 0; transform: translateY(0) scale(.25); } 48% { opacity: 1; } 58% { opacity: .85; transform: translateY(-83px) scale(1.35); } 62%, 100% { opacity: 0; transform: translateY(-83px) scale(1.35); } }
-@keyframes holoBurst { 0%, 45% { opacity: 0; transform: scale(.2); } 47% { opacity: 1; transform: scale(1); } 56%, 100% { opacity: 0; transform: scale(1.9); } }
-@keyframes holoSpark { 0%, 46% { opacity: 0; transform: translate(0, 0) rotate(var(--a)) scaleX(.5); } 47% { opacity: 1; } 54% { opacity: 1; transform: translate(var(--x), var(--y)) rotate(var(--a)) scaleX(1.5); } 62%, 100% { opacity: 0; transform: translate(calc(var(--x) * 1.3), calc(var(--y) * .72)) rotate(calc(var(--a) + 35deg)) scaleX(.4); } }
-@keyframes holoBolt { 0%, 46% { opacity: 0; transform: scaleY(0); } 48% { opacity: 1; } 55% { opacity: 1; transform: scaleY(1); } 61%, 100% { opacity: 0; transform: scaleY(1); } }
-@keyframes holoHit { 0%, 55% { opacity: 0; transform: scale(.85); } 58% { opacity: 1; transform: scale(1); } 76%, 100% { opacity: 0; transform: scale(1.7); } }
+@keyframes holoWave { 0%, 46% { opacity: 0; transform: translateY(0) scale(.25); } 49% { opacity: 1; } 68% { opacity: .85; transform: translateY(-83px) scale(1.35); } 73%, 100% { opacity: 0; transform: translateY(-83px) scale(1.35); } }
+@keyframes holoHit { 0%, 68% { opacity: 0; transform: scale(.85); } 71% { opacity: 1; transform: scale(1); } 90%, 100% { opacity: 0; transform: scale(1.55); } }
 @keyframes sweep { to { background-position: -200% 0; } }
 @keyframes medal { 50% { box-shadow: 0 0 9px var(--medal); } }
 @keyframes tickFlash { from { text-shadow: 0 0 14px currentColor; transform: scale(1.06); } }
@@ -346,17 +343,12 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .uplight .edge { filter: drop-shadow(0 0 6px var(--neon)); }
 .uplight .fan { filter: blur(7px); animation: fadeBlink 2s ease-in-out infinite; }
 .uplight .wave { fill: none; stroke: #eafff0; stroke-width: 1.6; opacity: 0; transform-box: fill-box; transform-origin: center; filter: drop-shadow(0 0 4px var(--neon)); animation: holoWave 7s linear infinite; }
-.sparkset { filter: drop-shadow(0 0 3px #ffc94a); }
-.sparkset line { stroke: #fff4c2; stroke-width: 1.7; stroke-linecap: round; opacity: 0; animation: holoSpark 7s ease-out var(--d) infinite; }
-.sparkset .s1 { stroke: #ffc94a; } .sparkset .s2 { stroke: var(--neon); }
-.uplight .wave.w1 { animation-delay: .12s; } .uplight .wave.w2 { animation-delay: .24s; }
-.uplight .burst { fill: #eafff0; opacity: 0; transform-box: fill-box; transform-origin: center; filter: drop-shadow(0 0 10px var(--neon)); animation: holoBurst 7s linear infinite; }
-.uplight .bolt { opacity: 0; transform-box: fill-box; transform-origin: bottom; filter: drop-shadow(0 0 6px var(--neon)); animation: holoBolt 7s linear infinite; }
+.uplight .wave.w1 { animation-delay: .22s; } .uplight .wave.w2 { animation-delay: .44s; }
 .projector .hit { fill: none; stroke: #eafff0; stroke-width: 2.2; opacity: 0; transform-box: fill-box; transform-origin: center; filter: drop-shadow(0 0 6px var(--neon)); animation: holoHit 7s linear infinite; }
 @keyframes holoFlicker { 0%, 100% { opacity: 1; } 91% { opacity: .9; } 92% { opacity: 1; } 95% { opacity: .84; } 96% { opacity: 1; } }
 @keyframes holoGlitch { 0%, 100% { transform: none; } 88% { transform: translateX(3px) skewX(-8deg); } 89% { transform: translateX(-2px); } 90% { transform: none; } }
 @keyframes padPulse { 50% { transform: scale(1.1); opacity: .65; } }
-@media (prefers-reduced-motion: reduce) { .sparks, .spark .ball, .projector .rise, .sparkset { display: none; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .sparks, .spark .ball, .projector .rise { display: none; } *, *::before, *::after { animation: none !important; transition: none !important; } }
 /* wide screens: one screen like the MT5 panel; a column taller than the screen scrolls by itself */
 @media (min-width: 1180px) {
   .status { --meet: calc(50% + 95px); }
