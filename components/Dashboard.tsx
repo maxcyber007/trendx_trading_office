@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { MODEL_NAMES, modelCode } from "@/lib/models";
 import NeuralCore from "./NeuralCore";
-import { AiChip, Calendar as CalIcon, ChartUp, Clock, Coins, Logo, Logout, Neural, Person, Power, Pulse, Shield, Signal, Trophy } from "./icons";
+import { AiChip, Bars, Calendar as CalIcon, ChartUp, Clock, Coins, Layers, Logo, Logout, Neural, Person, Power, Pulse, Shield, Signal, Trophy } from "./icons";
 
 type Account = { id: string; login: string; server: string; company: string; currency: string; is_demo: boolean };
 type Position = { ticket: number; symbol: string; type: number; magic: number; volume: number; open_price: number; profit: number };
@@ -62,7 +62,7 @@ function Calendar({ daily, money, today }: { daily: Data["daily"]; money: Money;
   const total = inMonth.reduce((s, x) => s + x.pl, 0);
   return (
     <section className="card">
-      <header><h2>PROFIT CALENDAR</h2>
+      <header><h2><CalIcon /> PROFIT CALENDAR</h2>
         <span className="nav"><button onClick={() => shift(-1)} aria-label="เดือนก่อน">‹</button>{new Date(Date.UTC(y, m - 1, 1)).toLocaleString("en-US", { month: "long", timeZone: "UTC" })} {y}<button onClick={() => shift(1)} aria-label="เดือนถัดไป">›</button></span>
         <b className={sign(total)}>Month {money(total, true)}</b></header>
       <div className="cal">
@@ -95,7 +95,7 @@ function Monthly({ monthly, money, balance, today }: { monthly: Data["monthly"];
   const yearStart = balance - after + deposits, yearPct = yearStart > 0 ? (total / yearStart) * 100 : 0;
   return (
     <section className="card monthly">
-      <header><h2>MONTHLY P/L <small>{year}</small></h2><b className={sign(total)}>Year {money(total, true)} {fmt(yearPct)}</b></header>
+      <header><h2><Bars /> MONTHLY P/L <small>{year}</small></h2><b className={sign(total)}>Year {money(total, true)} {fmt(yearPct)}</b></header>
       <p className="note top">{rows.reduce((s, r) => s + (r?.n ?? 0), 0)} trades &nbsp; {vals.filter((v) => v > 0).length} green months &nbsp; {vals.filter((v) => v < 0).length} red months</p>
       <div className="bars">{vals.map((v, i) => (
         <div key={i} className={i === thisMonth ? "cur" : i > thisMonth ? "future" : ""} style={{ "--i": i } as React.CSSProperties} title={money(v, true)}>
@@ -269,7 +269,7 @@ export default function Dashboard() {
           </div>
 
           <section className="card pos-card">
-            <header><h2>OPEN POSITIONS</h2><span>{positions.length} live</span></header>
+            <header><h2><Layers /> OPEN POSITIONS</h2><span>{positions.length} live</span></header>
             <div className="scroll"><table>
               <thead><tr><th>MODEL</th><th>SIDE</th><th>LOTS</th><th>OPEN PRICE</th><th className="rt">P/L</th></tr></thead>
               <tbody>{positions.length ? positions.map((p) => (

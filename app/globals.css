@@ -242,7 +242,7 @@ tbody tr { animation: rowIn .45s ease-out .35s backwards; } .top1 { animation: r
 .right .card { position: relative; }
 .right .card::before, .avatar::after { content: ""; position: absolute; inset: 0; padding: 1px; border-radius: 9px; pointer-events: none; background: conic-gradient(from var(--beam), transparent 0 68%, var(--neon2) 80%, var(--neon) 90%, var(--cyan) 97%, transparent); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); animation: beamSpin 6s linear infinite; }
 .right .card:nth-child(2)::before { animation-delay: -1.2s; } .right .card:nth-child(3)::before { animation-delay: -2.4s; } .right .card:nth-child(4)::before { animation-delay: -3.6s; } .right .card:nth-child(5)::before { animation-delay: -4.8s; }
-.right h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
+h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .rank-card tbody tr { animation-delay: calc(.3s + var(--i, 0) * 30ms); }
 .rank-card .top1 { background: linear-gradient(90deg, #123c20 0 35%, #2c8a4e 50%, #123c20 65% 100%) 0 0 / 200% 100%; animation: rowIn .45s ease-out .3s backwards, sweep 3.6s linear infinite; }
 .rank.r1 { --medal: #ffc94a; } .rank.r2 { --medal: #cdd6d0; } .rank.r3 { --medal: #d98a4e; }
