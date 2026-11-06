@@ -56,3 +56,9 @@ CREATE TABLE IF NOT EXISTS equity_samples (
   equity      NUMERIC(16,2) NOT NULL,
   PRIMARY KEY (account_id, bucket)
 );
+
+-- browsers with the dashboard open; the web app also creates this on first use
+CREATE TABLE IF NOT EXISTS web_visitors (
+  id        TEXT PRIMARY KEY,
+  last_seen TIMESTAMPTZ NOT NULL DEFAULT now()
+);

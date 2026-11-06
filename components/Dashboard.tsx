@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { MODEL_NAMES, modelCode } from "@/lib/models";
 import NeuralCore from "./NeuralCore";
-import { AiChip, Bars, Calendar as CalIcon, ChartUp, Clock, Coins, Layers, Logo, Logout, Neural, Person, Power, Pulse, Shield, Signal, Trophy } from "./icons";
+import { AiChip, Bars, Calendar as CalIcon, ChartUp, Clock, Coins, Layers, Logo, Logout, Neural, Person, Power, Pulse, Shield, Signal, Trophy, Users } from "./icons";
 
 type Account = { id: string; login: string; server: string; company: string; currency: string; is_demo: boolean; name: string | null };
 type Position = { ticket: number; symbol: string; type: number; magic: number; volume: number; open_price: number; profit: number };
@@ -12,6 +12,7 @@ type Sys = { cpu: number; cores: number; frame: number; peak: number; fps: numbe
 type EaState = { version?: string; symbol?: string; magic?: number; virtual_sl?: boolean; session?: string; news_filter?: boolean;
   dd?: { peak: number; max: number; max_pct: number }; sys?: Sys; models?: { no: number; state: number }[] };
 type Data = {
+  online: number | null;
   account: Account;
   state: { balance: number; equity: number; server_time: string; ea_alive: boolean; age: number; positions: Position[]; market: Market | null; ea_state: EaState | null } | null;
   last30: { trades: number; wins: number; losses: number };
@@ -25,6 +26,15 @@ type Money = (v: number, plus?: boolean, digits?: number) => string;
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const sign = (v: number) => (v > 0 ? "pos" : v < 0 ? "neg" : "");
+// one id per browser, so several tabs count as one online user
+const visitorId = () => {
+  const fresh = () => crypto.randomUUID();
+  try {
+    const id = localStorage.getItem("trendx_visitor") ?? fresh();
+    localStorage.setItem("trendx_visitor", id);
+    return id;
+  } catch { return fresh(); }
+};
 
 function Ring({ value }: { value: number }) {
   const c = 2 * Math.PI * 30;
@@ -180,7 +190,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     let live = true;
-    const load = () => fetch("/api/dashboard", { cache: "no-store" }).then((r) => {
+    const visitor = visitorId();
+    const load = () => fetch("/api/dashboard", { cache: "no-store", headers: { "x-visitor": visitor } }).then((r) => {
       if (r.status === 401) { location.href = "/login"; return null; }
       if (!r.ok) throw new Error();
       return r.json();
@@ -291,6 +302,7 @@ export default function Dashboard() {
         <span>Login : {account.login}{account.is_demo ? " (Demo)" : ""}</span>
         <span className="acct" title={account.company}>Broker : {account.company || "-"}</span><span className="acct" title={account.server}>Server : {account.server}</span>
         <span>Server Time : {state?.server_time?.replaceAll("-", ".") ?? "-"}</span><span className={state && state.age > 30 ? "neg" : ""}>Updated : {state ? `${state.age}s ago` : "-"}</span>{error && <span className="neg">{error}</span>}
+        {data.online !== null && <span className="online"><Users /> Online Users : {data.online}</span>}
         <button type="button" className="logout" onClick={logout}><Logout /> Logout</button></footer>
     </div>
   );
