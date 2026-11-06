@@ -3,6 +3,9 @@ import { FAMILIES, MODEL_FAMILIES, MODEL_NAMES, modelCode } from "@/lib/models";
 
 const W = 910, H = 860, IN_W = 172, BALL = { x: 468, y: 418, r: 272 }, CORE_R = 56, TILT = .34, SPEED = .22;
 const PAD_Y = 772, RISE = [-44, -26, -9, 12, 30, 47], NODE_W = 52, NODE_H = 20;
+// light shooting up from the bottom edge into the projector
+const EDGE_Y = H - 5, STREAKS = [-170, -118, -70, -26, 22, 66, 122, 174];
+const BRAIN = "M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18ZM12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18ZM15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4M17.599 6.5a3 3 0 0 0 .399-1.375M6.003 5.125A3 3 0 0 0 6.401 6.5M3.477 10.896a4 4 0 0 1 .585-.396M19.938 10.5a4 4 0 0 1 .585.396M6 18a4 4 0 0 1-1.967-.516M19.967 17.484A4 4 0 0 1 18 18";
 // LONG and SHORT sit evenly above and below the middle of the ball
 const OUT_X = 777, OUT_W = 128, OUT_H = 42, LONG_Y = BALL.y - 70, SHORT_Y = BALL.y + 70;
 // the gap under the title matches the gap under the last input
@@ -108,6 +111,17 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
           <stop offset=".5" stopColor="#00c853" stopOpacity=".12" />
           <stop offset="1" stopColor="#00c853" stopOpacity="0" />
         </radialGradient>
+        <linearGradient id="edgeGlow">
+          <stop offset="0" stopColor="#00c853" stopOpacity="0" />
+          <stop offset=".3" stopColor="#39ff6a" stopOpacity=".8" />
+          <stop offset={BALL.x / W} stopColor="#eafff0" />
+          <stop offset=".72" stopColor="#39ff6a" stopOpacity=".8" />
+          <stop offset="1" stopColor="#00c853" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="upGlow" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0" stopColor="#39ff6a" stopOpacity=".38" />
+          <stop offset="1" stopColor="#39ff6a" stopOpacity=".08" />
+        </linearGradient>
         <linearGradient id="holoBeam" x1="0" y1="1" x2="0" y2="0">
           <stop offset="0" stopColor="#39ff6a" stopOpacity=".4" />
           <stop offset=".65" stopColor="#35e0ff" stopOpacity=".09" />
@@ -115,6 +129,13 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
         </linearGradient>
       </defs>
       <circle className="coreglow" cx={BALL.x} cy={BALL.y} r={BALL.r + 40} fill="url(#coreGlow)" />
+      <g className="uplight">
+        <polygon className="fan" fill="url(#upGlow)" points={`${BALL.x - 250},${EDGE_Y} ${BALL.x + 250},${EDGE_Y} ${BALL.x + 84},${PAD_Y} ${BALL.x - 84},${PAD_Y}`} />
+        <rect className="edge" y={EDGE_Y} width={W} height="3" fill="url(#edgeGlow)" />
+        {STREAKS.map((dx, i) => <rect key={dx} className="streak" x="-1" y="-16" width="2" height="32" rx="1">
+          <animateMotion dur={`${1.1 + (i % 3) * .3}s`} begin={`${(i * .23) % 1}s`} repeatCount="indefinite" path={`M${BALL.x + dx} ${EDGE_Y} L${BALL.x + dx * .42} ${PAD_Y}`} />
+          <animate attributeName="opacity" values="0;1;0" dur={`${1.1 + (i % 3) * .3}s`} begin={`${(i * .23) % 1}s`} repeatCount="indefinite" /></rect>)}
+      </g>
       <g className="projector">
         <polygon fill="url(#holoBeam)" points={`${BALL.x - 30},${PAD_Y} ${BALL.x + 30},${PAD_Y} ${BALL.x + 150},${BALL.y + 200} ${BALL.x - 150},${BALL.y + 200}`} />
         <ellipse className="pad" cx={BALL.x} cy={PAD_Y} rx="84" ry="17" /><ellipse className="pad two" cx={BALL.x} cy={PAD_Y} rx="56" ry="12" /><ellipse className="pad core3" cx={BALL.x} cy={PAD_Y} rx="28" ry="6" />
@@ -148,8 +169,8 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
         <circle className="halo" cx={BALL.x} cy={BALL.y} r={CORE_R + 8} />
         <circle className="orbit" cx={BALL.x} cy={BALL.y} r={CORE_R + 13} />
         <circle className="ringc" cx={BALL.x} cy={BALL.y} r={CORE_R} />
-        <text x={BALL.x} y={BALL.y - 3} textAnchor="middle">AI CORE</text>
-        <text className="sub" x={BALL.x} y={BALL.y + 18} textAnchor="middle">{MODEL_NAMES.length} &gt; 1</text>
+        <path className="brain" d={BRAIN} transform={`translate(${BALL.x - 26} ${BALL.y - 44}) scale(2.17)`} />
+        <text x={BALL.x} y={BALL.y + 32} textAnchor="middle">AI CORE</text>
       </g>
       <path ref={front} className="wire" />
 
