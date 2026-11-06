@@ -89,8 +89,8 @@ td { padding: 2px 4px; white-space: nowrap; }
 .half { display: flex; justify-content: center; min-height: 0; }
 .half.up { align-items: flex-end; border-bottom: 1px dotted #2b5a3b; } .half.down { align-items: flex-start; }
 .half span { position: relative; width: 66%; min-height: 2px; }
-.half.up span { background: linear-gradient(0deg, #008f3c, var(--neon), #008f3c) 0 0 / 100% 240%; border-radius: 3px 3px 0 0; box-shadow: 0 0 9px rgba(57, 255, 106, .55); transform-origin: bottom; animation: barRise .9s cubic-bezier(.2, .9, .25, 1.1) calc(var(--i) * 55ms) backwards, barFlow 2.6s linear infinite; }
-.half.down span { background: linear-gradient(180deg, #a31f2f, var(--red), #a31f2f) 0 0 / 100% 240%; border-radius: 0 0 3px 3px; box-shadow: 0 0 8px rgba(255, 77, 94, .5); transform-origin: top; animation: barRise .9s cubic-bezier(.2, .9, .25, 1.1) calc(var(--i) * 55ms) backwards, barFlow 2.6s linear infinite; }
+.half.up span { background: linear-gradient(0deg, #008f3c, #00c853 32%, #c9ffdb 50%, #00c853 68%, #008f3c) 0 0 / 100% 200%; border-radius: 3px 3px 0 0; box-shadow: 0 0 9px rgba(57, 255, 106, .55); transform-origin: bottom; animation: barRise .9s cubic-bezier(.2, .9, .25, 1.1) calc(var(--i) * 55ms) backwards, barUp 1.8s linear infinite; }
+.half.down span { background: linear-gradient(180deg, #a31f2f, var(--red), #a31f2f) 0 0 / 100% 200%; border-radius: 0 0 3px 3px; box-shadow: 0 0 8px rgba(255, 77, 94, .5); transform-origin: top; animation: barRise .9s cubic-bezier(.2, .9, .25, 1.1) calc(var(--i) * 55ms) backwards, barDown 1.8s linear infinite; }
 .half em { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); font-style: normal; font-size: 9px; color: var(--text); white-space: nowrap; }
 .bars small { font-size: 11px; }
 .bars .cur small { color: var(--neon); font-weight: 700; }
@@ -236,7 +236,8 @@ tbody tr { animation: rowIn .45s ease-out .35s backwards; } .top1 { animation: r
 @keyframes edgeRun { to { left: 110%; } }
 @keyframes figureGlow { 50% { text-shadow: 0 0 9px rgba(57, 255, 106, .5); } }
 @keyframes barRise { from { transform: scaleY(0); opacity: .2; } to { transform: scaleY(1); opacity: 1; } }
-@keyframes barFlow { to { background-position: 0 -240%; } }
+@keyframes barUp { to { background-position: 0 200%; } }
+@keyframes barDown { to { background-position: 0 -200%; } }
 @keyframes curPulse { 50% { box-shadow: 0 0 14px rgba(57, 255, 106, .55), inset 0 0 12px rgba(57, 255, 106, .16); } }
 /* right panel: a beam of light circling each card, live price and data motion; card backgrounds stay as they are */
 @property --beam { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
