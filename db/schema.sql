@@ -60,5 +60,6 @@ CREATE TABLE IF NOT EXISTS equity_samples (
 -- browsers with the dashboard open; the web app also creates this on first use
 CREATE TABLE IF NOT EXISTS web_visitors (
   id        TEXT PRIMARY KEY,
-  last_seen TIMESTAMPTZ NOT NULL DEFAULT now()
+  last_seen TIMESTAMPTZ NOT NULL DEFAULT now(),
+  account_id BIGINT
 );

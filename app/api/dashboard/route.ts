@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     if (!row) return NextResponse.json({ error: "login required" }, { status: 401 });
     const q = (sql: string) => read<Record<string, any>>(sql, [row.id]);
     const [online, acc, state, recent30, daily, monthly, ranking, dd, marks] = await Promise.all([
-      onlineUsers(req.headers.get("x-visitor")),
+      onlineUsers(req.headers.get("x-visitor"), row.id),
       q(`SELECT id,login,server,company,currency,is_demo,name FROM accounts WHERE id=$1`),
       q(`SELECT balance::float, equity::float, margin::float, to_char(server_time,'YYYY-MM-DD HH24:MI:SS') server_time, ea_alive, ea_state, positions, market,
            EXTRACT(EPOCH FROM now()-updated_at)::int age FROM account_state WHERE account_id=$1`),
