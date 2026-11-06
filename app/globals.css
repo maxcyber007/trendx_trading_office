@@ -157,13 +157,6 @@ td { padding: 2px 4px; white-space: nowrap; }
 .out.short rect { fill: #2a0d12; stroke: var(--red); } .out.short text { fill: var(--red); }
 .out.long.on rect { fill: #0f3a1d; stroke-width: 3; } .out.short.on rect { fill: #4a121a; stroke-width: 3; }
 .sparks circle { fill: var(--neon); filter: drop-shadow(0 0 3px var(--neon)); }
-.models { display: none; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-.node { display: flex; align-items: center; gap: 8px; border: 1px solid var(--neon2); border-radius: 999px; padding: 5px 10px; font-size: 12px; min-width: 0; background: #06140c; }
-.node b { color: var(--neon); }
-.node span { color: #a9c9b2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
-.node em { font-style: normal; font-weight: 700; font-size: 11px; }
-.node.boost { border-color: var(--yellow); } .node.boost b, .node.boost em { color: var(--yellow); }
-.node.stop { border-color: var(--red); background: #2a0d12; } .node.stop b, .node.stop em { color: var(--red); }
 .empty { min-height: 100vh; display: grid; place-items: center; padding: 16px; text-align: center; color: var(--dim); }
 /* page-wide motion: opacity and transforms only, so the live figures stay readable and cheap to draw */
 body::before { content: ""; position: fixed; inset: -80px; z-index: -1; pointer-events: none; background-image: radial-gradient(circle at 50% 42%, rgba(0, 200, 83, .13), transparent 42%), linear-gradient(rgba(57, 255, 106, .035) 1px, transparent 1px), linear-gradient(90deg, rgba(57, 255, 106, .035) 1px, transparent 1px); background-size: auto, 44px 44px, 44px 44px; animation: gridDrift 18s linear infinite; }
@@ -338,7 +331,7 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 @media (max-width: 1000px) {
   .layout { grid-template-columns: minmax(0, 1fr); padding: 8px 16px; }
   .left, .center, .right { grid-column: 1; grid-row: auto; }
-  .net { display: none; } .models { display: grid; }
+  .center { display: none; }
   .status { position: static; }
 }
 @media (max-width: 560px) {

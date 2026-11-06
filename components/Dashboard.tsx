@@ -284,10 +284,6 @@ export default function Dashboard() {
 
         <div className="center">
           <NeuralCore states={states} side={side} />
-          <div className="models">{MODEL_NAMES.map((name, i) => {
-            const st = states.get(i + 1) ?? 0;
-            return <div key={name} className={`node ${st > 0 ? "boost" : st < 0 ? "stop" : ""}`}><b>{modelCode(i + 1)}</b><span>{name}</span>{st !== 0 && <em>{st > 0 ? "x2" : "STOP"}</em>}</div>;
-          })}</div>
         </div>
 
         <div className="right">
