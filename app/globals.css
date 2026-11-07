@@ -22,7 +22,8 @@ select, input { background: var(--card); color: var(--text); border: 1px solid v
 .right { display: grid; gap: 7px; min-width: 0; }
 .center { min-width: 0; background-image: linear-gradient(rgba(57,255,106,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(57,255,106,.035) 1px, transparent 1px); background-size: 12px 12px; }
 .card { background: var(--card); border: 1px solid var(--edge); border-radius: 8px; padding: 7px 10px; min-width: 0; }
-.right .card { border-color: var(--neon2); border-radius: 10px; }
+/* right cards use the same 1px dark edge as the left; the moving beam sits on that edge, not inside it */
+.right .card { border-radius: 8px; }
 .card > header { display: flex; gap: 8px; justify-content: space-between; align-items: center; margin-bottom: 4px; color: var(--dim); font-size: 12px; }
 .card > header h2 { color: var(--text); }
 .card strong { display: block; font-size: 18px; white-space: nowrap; }
@@ -240,6 +241,7 @@ tbody tr { animation: rowIn .45s ease-out .35s backwards; } .top1 { animation: r
 @property --beam { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
 .right .card { position: relative; }
 .right .card::before, .avatar::after { content: ""; position: absolute; inset: 0; padding: 1px; border-radius: 9px; pointer-events: none; background: conic-gradient(from var(--beam), transparent 0 68%, var(--neon2) 80%, var(--neon) 90%, var(--cyan) 97%, transparent); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); animation: beamSpin 6s linear infinite; }
+.right .card::before { inset: -1px; border-radius: 8px; }
 .right .card:nth-child(2)::before { animation-delay: -1.2s; } .right .card:nth-child(3)::before { animation-delay: -2.4s; } .right .card:nth-child(4)::before { animation-delay: -3.6s; } .right .card:nth-child(5)::before { animation-delay: -4.8s; }
 h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .rank-card tbody tr { animation-delay: calc(.3s + var(--i, 0) * 30ms); }
