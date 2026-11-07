@@ -347,7 +347,7 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .net .mnode:not(.front) > .glow, .net .mnode:not(.front) > .tube { visibility: hidden; }
 .net .mnode.boost > .glow { stroke: var(--yellow); } .net .mnode.stop > .glow { stroke: var(--red); }
 .net .mnode.boost > .tube { stroke: #fff4c2; } .net .mnode.stop > .tube { stroke: #ffc9cf; }
-.mnode .code { font-size: 12px; }
+.mnode .code { font-size: 11px; }
 .focus { fill: #d6ffe9; font-size: 15px; font-weight: 700; letter-spacing: .04em; }
 .projector .pad { fill: rgba(57, 255, 106, .05); stroke: var(--neon); stroke-width: 1.2; transform-box: fill-box; transform-origin: center; animation: padPulse 2.8s ease-in-out infinite; }
 .projector .pad.two { stroke: var(--cyan); animation-delay: .35s; } .projector .pad.core3 { fill: rgba(57, 255, 106, .42); stroke-width: 2; animation-delay: .7s; }
