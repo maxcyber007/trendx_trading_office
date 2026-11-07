@@ -76,13 +76,14 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
         const [x, y, z] = turn(spot, angle), g = nodes.current[k];
         if (z > nearZ) { nearZ = z; near = k; }
         if (!g) return;
-        // a node passing behind the core disappears behind it
-        const hidden = z < 0 && Math.hypot(x, y) * BALL.r < CORE_R + 16;
+        // nodes on the far side stay hidden; they fade in and out at the edge of the ball
+        const seen = Math.max(0, Math.min(1, (z + .02) / .18));
         g.setAttribute("transform", `translate(${px(x)} ${py(y)}) scale(${(.92 + z * .24).toFixed(3)})`);
-        g.setAttribute("opacity", hidden ? "0" : (.5 + (z + 1) * .25).toFixed(2));
+        g.setAttribute("opacity", (seen * (.75 + z * .25)).toFixed(2));
+        g.style.pointerEvents = seen > 0 ? "auto" : "none";
         // the glow rises and falls with the turn, so a node fades in at the front and out toward the back
         g.style.setProperty("--glow", Math.max(0, Math.min(1, (z - .02) / .3)).toFixed(2));
-        if (z > -.15) l += `M${px(x)} ${py(y)}L${BALL.x} ${BALL.y}`;
+        if (z > .02) l += `M${px(x)} ${py(y)}L${BALL.x} ${BALL.y}`;
       });
       front.current?.setAttribute("d", f);
       back.current?.setAttribute("d", b);
