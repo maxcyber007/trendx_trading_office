@@ -231,7 +231,7 @@ export default function Dashboard() {
 
   if (!data) return (
     <main className="empty boot" role="status">
-      <span className="bootcore"><i /><i /><i /><AiChip size={46} /></span>
+      <span className="bootcore"><i /><i /><i /><AiChip size={23} /></span>
       <b>LOADING<em><u>.</u><u>.</u><u>.</u></em></b>
       <span className="bootbar"><i /></span>
       {error && <p className="neg">{error}</p>}
