@@ -7,6 +7,10 @@ const space = Audiowide({ subsets: ["latin"], weight: "400", variable: "--font-t
 const W = 910, H = 860, IN_W = 172, BALL = { x: 468, y: 418, r: 272 }, CORE_R = 56, TILT = .34, SPEED = .22;
 // the ball also nods up and down, so all 39 models get their turn at the front centre
 const SWAY = 1.45, SWAY_RATE = .27;
+// each model is joined to the core by a curved fibre; light waves run along it into the core
+const BEND = .26, PACKET_RATE = .5, TRAIL = .22, HEAD = .06;
+// the brain spins on its own axis, drawn as three layers so it has some thickness
+const BRAIN_SPIN = 1.1, BRAIN_DEPTH = [-5, 0, 5], BRAIN_S = 2.17;
 const PAD_Y = 772, RISE = [-44, -26, -9, 12, 30, 47], NODE_W = 50, NODE_H = 19, NODE_Y = 3;
 // light shooting up from the bottom edge into the projector
 const EDGE_Y = H - 5;
@@ -23,11 +27,6 @@ const SPOTS: V[] = MODEL_NAMES.map((_, k, all) => {
   const y = 1 - (2 * (k + .5)) / all.length, r = Math.sqrt(1 - y * y), a = k * 2.399963;
   return [Math.cos(a) * r, y, Math.sin(a) * r];
 });
-const circle = (at: (t: number) => V) => Array.from({ length: 33 }, (_, i) => at((i / 32) * Math.PI * 2));
-const WIRES: V[][] = [
-  ...[0, 1, 2, 3, 4, 5].map((m) => { const a = (m / 6) * Math.PI; return circle((t) => [Math.cos(t) * Math.cos(a), Math.sin(t), Math.cos(t) * Math.sin(a)]); }),
-  ...[-.72, -.4, 0, .4, .72].map((y) => { const r = Math.sqrt(1 - y * y); return circle((t) => [Math.cos(t) * r, y, Math.sin(t) * r]); }),
-];
 // turns a point on the ball, then tips the ball toward the viewer
 const turn = ([x, y, z]: V, angle: number, tilt: number): V => {
   const c = Math.cos(angle), s = Math.sin(angle), x1 = x * c + z * s, z1 = z * c - x * s;
@@ -47,10 +46,10 @@ const rest = (e: React.PointerEvent<SVGSVGElement>) => { e.currentTarget.style.r
 
 export default function NeuralCore({ states, side }: { states: Map<number, number>; side: number }) {
   const count = FAMILIES.map((_, f) => MODEL_FAMILIES.filter((x) => x === f).length);
-  const input = FAMILIES.map((_, i) => { const [x, y] = rim(inY(i) + 13, -1); return curve(IN_W, inY(i) + 13, x, y); });
   const [lx, ly] = rim(BALL.y - 170, 1), [sx, sy] = rim(BALL.y + 170, 1);
   const toLong = curve(lx, ly, OUT_X, LONG_Y), toShort = curve(sx, sy, OUT_X, SHORT_Y);
-  const front = useRef<SVGPathElement>(null), back = useRef<SVGPathElement>(null), links = useRef<SVGPathElement>(null);
+  const links = useRef<SVGPathElement>(null), inLinks = useRef<SVGPathElement>(null), trails = useRef<SVGPathElement>(null), packets = useRef<SVGPathElement>(null);
+  const brains = useRef<(SVGPathElement | null)[]>([]);
   const nodes = useRef<(SVGGElement | null)[]>([]), focus = useRef<SVGTextElement>(null), hover = useRef(-1);
 
   useEffect(() => {
@@ -61,20 +60,21 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
       shown = k;
       focus.current.textContent = `${modelCode(k + 1)}  ${MODEL_NAMES[k]}`;
     };
-    const draw = () => {
-      let f = "", b = "", l = "", near = 0, nearZ = -2;
+    const draw = (now: number) => {
+      let l = "", n = "", w = "", d = "", near = 0, nearZ = -2;
+      // a light streak along a cubic curve: a long dim trail and a short bright head
+      const wave = (P: number[], t: number) => {
+        const at = (u: number) => {
+          u = Math.max(0, u);
+          const a = 1 - u, p0 = a * a * a, p1 = 3 * a * a * u, p2 = 3 * a * u * u, p3 = u * u * u;
+          return `${(p0 * P[0] + p1 * P[2] + p2 * P[4] + p3 * P[6]).toFixed(1)} ${(p0 * P[1] + p1 * P[3] + p2 * P[5] + p3 * P[7]).toFixed(1)}`;
+        };
+        const run = (from: number) => { let s = `M${at(from)}`; for (let i = 1; i <= 6; i++) s += `L${at(from + ((t - from) * i) / 6)}`; return s; };
+        w += run(t - TRAIL);
+        d += run(t - HEAD);
+      };
+      const path = (P: number[]) => `M${P[0].toFixed(1)} ${P[1].toFixed(1)}C${P.slice(2).map((v) => v.toFixed(1)).join(" ")}`;
       const tilt = TILT + Math.sin(angle * SWAY_RATE) * SWAY;
-      for (const wire of WIRES) {
-        let prev: V | null = null;
-        for (const p of wire) {
-          const q = turn(p, angle, tilt);
-          if (prev) {
-            const seg = `M${px(prev[0])} ${py(prev[1])}L${px(q[0])} ${py(q[1])}`;
-            if (q[2] + prev[2] > 0) f += seg; else b += seg;
-          }
-          prev = q;
-        }
-      }
       SPOTS.forEach((spot, k) => {
         const [x, y, z] = turn(spot, angle, tilt), g = nodes.current[k];
         if (z > nearZ) { nearZ = z; near = k; }
@@ -86,21 +86,36 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
         g.style.pointerEvents = seen > 0 ? "auto" : "none";
         // the node nearest the viewer lights its eyes, fading as it turns away
         g.style.setProperty("--eye", Math.max(0, Math.min(1, (z - .9) / .07)).toFixed(2));
-        if (z > .02) l += `M${px(x)} ${py(y)}L${BALL.x} ${BALL.y}`;
+        if (z > .02) {
+          // each fibre has its own soft S-bend that drifts slowly, like a strand floating in water
+          const X = BALL.x + x * BALL.r, Y = BALL.y - y * BALL.r, dx = BALL.x - X, dy = BALL.y - Y, sec = now / 1000;
+          const b1 = BEND * (Math.sin(k * 2.17) + .35 * Math.sin(sec * .6 + k)), b2 = BEND * (.55 * Math.cos(k * 1.31) - .3 * Math.sin(sec * .45 + k * 1.7));
+          const toCore = [X, Y, X + dx * .33 - dy * b1, Y + dy * .33 + dx * b1, X + dx * .7 - dy * b2, Y + dy * .7 + dx * b2, BALL.x, BALL.y];
+          l += path(toCore);
+          wave(toCore, ((now / 1000) * PACKET_RATE + k * .618) % 1);
+          // its input family feeds it from the left
+          const iy = inY(MODEL_FAMILIES[k]) + 13, mx = (IN_W + X) / 2, fromInput = [IN_W, iy, mx, iy, mx, Y, X, Y];
+          n += path(fromInput);
+          wave(fromInput, ((now / 1000) * PACKET_RATE * .8 + k * .382) % 1);
+        }
       });
-      front.current?.setAttribute("d", f);
-      back.current?.setAttribute("d", b);
       links.current?.setAttribute("d", l);
+      inLinks.current?.setAttribute("d", n);
+      trails.current?.setAttribute("d", w);
+      packets.current?.setAttribute("d", d);
+      const spin = (now / 1000) * BRAIN_SPIN, c = Math.cos(spin), s = Math.sin(spin);
+      brains.current.forEach((el, i) => el?.setAttribute("transform",
+        `translate(${(BALL.x + s * BRAIN_DEPTH[i]).toFixed(2)} ${BALL.y - 18}) scale(${(BRAIN_S * (Math.abs(c) < .04 ? Math.sign(c || 1) * .04 : c)).toFixed(3)} ${BRAIN_S}) translate(-12 -12)`));
       label(hover.current >= 0 ? hover.current : near);
     };
     const tick = (now: number) => {
       frame = requestAnimationFrame(tick);
-      if (now - last < 33 || !front.current?.getBoundingClientRect().width) return;   // about 30 frames a second, nothing while hidden
+      if (now - last < 33 || !links.current?.getBoundingClientRect().width) return;   // about 30 frames a second, nothing while hidden
       if (hover.current < 0) angle += ((now - last) / 1000) * SPEED;
       last = now;
-      draw();
+      draw(now);
     };
-    draw();
+    draw(performance.now());
     if (!still) frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
   }, []);
@@ -173,8 +188,8 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
       <text className="nh" x={OUT_X} y={LONG_Y - OUT_H / 2 - 12}>OUTPUT</text>
       <text ref={focus} className="focus" x={BALL.x} y={BALL.y - BALL.r - 34} textAnchor="middle" />
 
-      <g className="edges">{input.map((d, i) => <path key={i} d={d} />)}
-        <path d={toLong} /><path className="redge" d={toShort} /></g>
+      <path ref={inLinks} className="inlinks" />
+      <g className="edges"><path d={toLong} /><path className="redge" d={toShort} /></g>
 
       {FAMILIES.map((name, i) => (
         <g key={name} className="inode">
@@ -185,17 +200,16 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
         </g>
       ))}
 
-      <path ref={back} className="wire back" />
-      <circle className="rimline" cx={BALL.x} cy={BALL.y} r={BALL.r} />
       <path ref={links} className="links" />
+      <path ref={trails} className="trails" />
+      <path ref={packets} className="packets" />
       <g className="core">
         <circle className="halo" cx={BALL.x} cy={BALL.y} r={CORE_R + 8} />
         <circle className="orbit" cx={BALL.x} cy={BALL.y} r={CORE_R + 13} />
         <circle className="ringc" cx={BALL.x} cy={BALL.y} r={CORE_R} />
-        <path className="brain" d={BRAIN} transform={`translate(${BALL.x - 26} ${BALL.y - 44}) scale(2.17)`} />
+        {BRAIN_DEPTH.map((dz, i) => <path key={dz} ref={(el) => { brains.current[i] = el; }} className={`brain${i === 1 ? "" : " layer"}`} d={BRAIN} transform={`translate(${BALL.x} ${BALL.y - 18}) scale(${BRAIN_S}) translate(-12 -12)`} />)}
         <text x={BALL.x} y={BALL.y + 32} textAnchor="middle">AI CORE</text>
       </g>
-      <path ref={front} className="wire" />
 
       {MODEL_NAMES.map((name, k) => {
         const st = states.get(k + 1) ?? 0;
@@ -214,7 +228,6 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
       <g className={`out short ${side < 0 ? "on" : ""}`}><rect x={OUT_X} y={SHORT_Y - OUT_H / 2} width={OUT_W} height={OUT_H} rx="9" /><text x={OUT_X + OUT_W / 2} y={SHORT_Y + 5} textAnchor="middle">SHORT</text></g>
 
       <g className="sparks">
-        {input.map((d, i) => <circle key={i} r="2.6"><animateMotion dur={`${2.4 + (i % 4) * 0.5}s`} begin={`${(i * 0.37) % 2}s`} repeatCount="indefinite" path={d} /></circle>)}
         <circle r="2.6"><animateMotion dur="2.4s" repeatCount="indefinite" path={toLong} /></circle>
         <circle className="red" r="2.6"><animateMotion dur="2.4s" begin="1.2s" repeatCount="indefinite" path={toShort} /></circle>
       </g>

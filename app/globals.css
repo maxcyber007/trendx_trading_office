@@ -350,7 +350,11 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .core .ringc { fill: #020a06; }
 .wire { fill: none; stroke: #5cf5ae; stroke-width: .8; opacity: .55; } .wire.back { stroke: #2bd08a; stroke-width: .6; opacity: .2; }
 .rimline { fill: none; stroke: var(--neon); stroke-width: 1.2; opacity: .55; filter: drop-shadow(0 0 5px var(--neon)); }
-.links { fill: none; stroke: var(--neon); stroke-width: .5; opacity: .28; }
+.links { fill: none; stroke: #5cf5ae; stroke-width: .9; opacity: .3; filter: drop-shadow(0 0 2px var(--neon)); }
+.inlinks { fill: none; stroke: #5cf5ae; stroke-width: .7; opacity: .22; }
+.trails { fill: none; stroke: var(--neon); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; opacity: .35; filter: drop-shadow(0 0 4px var(--neon)); }
+.packets { fill: none; stroke: #eafff0; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: .95; filter: drop-shadow(0 0 3px var(--neon)); }
+.core .brain.layer { fill: none; stroke-width: 1; opacity: .4; animation: none; filter: none; }
 .net .mnode { cursor: pointer; } .mnode rect { fill: rgba(3, 30, 20, .78); } .mnode.stop > rect { fill: rgba(80, 12, 24, .82); }
 .mnode.boost > rect, .mnode.stop > rect { animation: none; }
 .mnode .code { font-size: 11px; }
