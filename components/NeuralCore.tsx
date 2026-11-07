@@ -80,6 +80,7 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
         const hidden = z < 0 && Math.hypot(x, y) * BALL.r < CORE_R + 16;
         g.setAttribute("transform", `translate(${px(x)} ${py(y)}) scale(${(.92 + z * .24).toFixed(3)})`);
         g.setAttribute("opacity", hidden ? "0" : (.5 + (z + 1) * .25).toFixed(2));
+        g.classList.toggle("front", z > .05);   // only nodes on the near side of the ball glow
         if (z > -.15) l += `M${px(x)} ${py(y)}L${BALL.x} ${BALL.y}`;
       });
       front.current?.setAttribute("d", f);
