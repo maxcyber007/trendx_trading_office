@@ -229,7 +229,14 @@ export default function Dashboard() {
 
   const logout = () => fetch("/api/login", { method: "DELETE" }).then((r) => { if (!r.ok) throw new Error(); location.href = "/login"; }).catch(() => setError("ออกจากระบบไม่สำเร็จ"));
 
-  if (!data) return <main className="empty">{error || "Loading...."}</main>;
+  if (!data) return (
+    <main className="empty boot" role="status">
+      <span className="bootcore"><i /><i /><i /><AiChip size={46} /></span>
+      <b>LOADING<em><u>.</u><u>.</u><u>.</u></em></b>
+      <span className="bootbar"><i /></span>
+      {error && <p className="neg">{error}</p>}
+    </main>
+  );
 
   const { account, state, last30 } = data;
   const ea = state?.ea_state;
