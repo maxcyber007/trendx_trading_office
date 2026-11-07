@@ -352,9 +352,11 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .rimline { fill: none; stroke: var(--neon); stroke-width: 1.2; opacity: .55; filter: drop-shadow(0 0 5px var(--neon)); }
 .links { fill: none; stroke: #5cf5ae; stroke-width: .9; opacity: .3; filter: drop-shadow(0 0 2px var(--neon)); }
 .inlinks { fill: none; stroke: #5cf5ae; stroke-width: .7; opacity: .22; }
-.trails { fill: none; stroke: var(--neon); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; opacity: .35; filter: drop-shadow(0 0 4px var(--neon)); }
-.packets { fill: none; stroke: #eafff0; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: .95; filter: drop-shadow(0 0 3px var(--neon)); }
-.core .brain.layer { fill: none; stroke-width: 1; opacity: .4; animation: none; filter: none; }
+.comet { fill: none; stroke: var(--neon); stroke-linecap: round; stroke-linejoin: round; }
+.comet.c0 { stroke-width: .45; opacity: .18; } .comet.c1 { stroke-width: .7; opacity: .35; } .comet.c2 { stroke: #9dffbe; stroke-width: .95; opacity: .6; }
+.comet.head { stroke: #f2fff6; stroke-width: 1.9; filter: drop-shadow(0 0 2.5px var(--neon)); }
+.core .brain3d { fill: none; stroke: #7dffa6; stroke-width: 1.1; stroke-linecap: round; filter: drop-shadow(0 0 2.5px var(--neon)); }
+.core .brain3d.back { stroke: var(--neon); stroke-width: .7; opacity: .28; filter: none; }
 .net .mnode { cursor: pointer; } .mnode rect { fill: rgba(3, 30, 20, .78); } .mnode.stop > rect { fill: rgba(80, 12, 24, .82); }
 .mnode.boost > rect, .mnode.stop > rect { animation: none; }
 .mnode .code { font-size: 11px; }
@@ -367,7 +369,6 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .projector .pad { fill: rgba(57, 255, 106, .05); stroke: var(--neon); stroke-width: 1.2; transform-box: fill-box; transform-origin: center; animation: padPulse 2.8s ease-in-out infinite; }
 .projector .pad.two { stroke: var(--cyan); animation-delay: .35s; } .projector .pad.core3 { fill: rgba(57, 255, 106, .42); stroke-width: 2; animation-delay: .7s; }
 .projector .rise { fill: #baffd8; }
-.core .brain { fill: rgba(57, 255, 106, .12); stroke: var(--neon); stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 3px var(--neon)); animation: fadeBlink 2.4s ease-in-out infinite; }
 .uplight .edge { filter: drop-shadow(0 0 6px var(--neon)); }
 .uplight .fan { filter: blur(7px); animation: fadeBlink 2s ease-in-out infinite; }
 .uplight .wave { fill: none; stroke: #eafff0; stroke-width: 1.6; opacity: 0; transform-box: fill-box; transform-origin: center; filter: drop-shadow(0 0 4px var(--neon)); animation: holoWave 7s linear infinite; }

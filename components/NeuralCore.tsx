@@ -8,13 +8,13 @@ const W = 910, H = 860, IN_W = 172, BALL = { x: 468, y: 418, r: 272 }, CORE_R = 
 // the ball also nods up and down, so all 39 models get their turn at the front centre
 const SWAY = 1.45, SWAY_RATE = .27;
 // each model is joined to the core by a curved fibre; light waves run along it into the core
-const BEND = .26, PACKET_RATE = .5, TRAIL = .22, HEAD = .06;
-// the brain spins on its own axis, drawn as three layers so it has some thickness
-const BRAIN_SPIN = 1.1, BRAIN_DEPTH = [-5, 0, 5], BRAIN_S = 2.17;
+// the waves are small comets: a bright head with a tail that thins and fades behind it
+const BEND = .26, PACKET_RATE = .5, TRAIL = .2, TAIL = [1, .55, .25];
+// a wire brain built in 3D: two hemispheres with wavy folds, spinning on its upright axis
+const BRAIN_SPIN = .9, BRAIN_TILT = .38, BRAIN_Y = BALL.y - 16, BRAIN_K = 1.45;
 const PAD_Y = 772, RISE = [-44, -26, -9, 12, 30, 47], NODE_W = 50, NODE_H = 19, NODE_Y = 3;
 // light shooting up from the bottom edge into the projector
 const EDGE_Y = H - 5;
-const BRAIN = "M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18ZM12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18ZM15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4M17.599 6.5a3 3 0 0 0 .399-1.375M6.003 5.125A3 3 0 0 0 6.401 6.5M3.477 10.896a4 4 0 0 1 .585-.396M19.938 10.5a4 4 0 0 1 .585.396M6 18a4 4 0 0 1-1.967-.516M19.967 17.484A4 4 0 0 1 18 18";
 // LONG and SHORT sit evenly above and below the middle of the ball
 const OUT_X = 777, OUT_W = 128, OUT_H = 42, LONG_Y = BALL.y - 70, SHORT_Y = BALL.y + 70;
 // the gap under the title matches the gap under the last input
@@ -28,6 +28,21 @@ const SPOTS: V[] = MODEL_NAMES.map((_, k, all) => {
   return [Math.cos(a) * r, y, Math.sin(a) * r];
 });
 // turns a point on the ball, then tips the ball toward the viewer
+const BRAIN3D: V[][] = (() => {
+  const out: V[][] = [];
+  for (const h of [-1, 1]) {
+    // th runs round the hemisphere from the top middle to the bottom, s from the front to the back
+    const at = (th: number, s: number, wob: number): V => {
+      const f = Math.pow(Math.sin(s), .55) * (1 + wob), y = 16 * Math.cos(th) * f;
+      return [h * (1.6 + 11 * Math.sin(th) * f) * BRAIN_K, (y < 0 ? y * .7 : y) * BRAIN_K, 24 * Math.cos(s) * BRAIN_K];
+    };
+    for (const th of [.22, .65, 1.1, 1.55, 2, 2.45])
+      out.push(Array.from({ length: 31 }, (_, i) => { const s = .08 + (i / 30) * (Math.PI - .16); return at(th, s, .07 * Math.sin(s * 9 + th * 5 + h)); }));
+    for (const s of [.55, 1.05, 1.57, 2.1, 2.6])
+      out.push(Array.from({ length: 21 }, (_, i) => { const th = .04 + (i / 20) * 2.86; return at(th, s, .07 * Math.sin(th * 8 + s * 4)); }));
+  }
+  return out;
+})();
 const turn = ([x, y, z]: V, angle: number, tilt: number): V => {
   const c = Math.cos(angle), s = Math.sin(angle), x1 = x * c + z * s, z1 = z * c - x * s;
   return [x1, y * Math.cos(tilt) - z1 * Math.sin(tilt), y * Math.sin(tilt) + z1 * Math.cos(tilt)];
@@ -48,8 +63,8 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
   const count = FAMILIES.map((_, f) => MODEL_FAMILIES.filter((x) => x === f).length);
   const [lx, ly] = rim(BALL.y - 170, 1), [sx, sy] = rim(BALL.y + 170, 1);
   const toLong = curve(lx, ly, OUT_X, LONG_Y), toShort = curve(sx, sy, OUT_X, SHORT_Y);
-  const links = useRef<SVGPathElement>(null), inLinks = useRef<SVGPathElement>(null), trails = useRef<SVGPathElement>(null), packets = useRef<SVGPathElement>(null);
-  const brains = useRef<(SVGPathElement | null)[]>([]);
+  const links = useRef<SVGPathElement>(null), inLinks = useRef<SVGPathElement>(null), comets = useRef<(SVGPathElement | null)[]>([]);
+  const brainFront = useRef<SVGPathElement>(null), brainBack = useRef<SVGPathElement>(null);
   const nodes = useRef<(SVGGElement | null)[]>([]), focus = useRef<SVGTextElement>(null), hover = useRef(-1);
 
   useEffect(() => {
@@ -61,8 +76,10 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
       focus.current.textContent = `${modelCode(k + 1)}  ${MODEL_NAMES[k]}`;
     };
     const draw = (now: number) => {
-      let l = "", n = "", w = "", d = "", near = 0, nearZ = -2;
-      // a light streak along a cubic curve: a long dim trail and a short bright head
+      let l = "", n = "", near = 0, nearZ = -2;
+      const tails = TAIL.map(() => "");
+      let heads = "";
+      // a comet along a cubic curve: tail layers get thinner and dimmer the further back they reach
       const wave = (P: number[], t: number) => {
         const at = (u: number) => {
           u = Math.max(0, u);
@@ -70,8 +87,9 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
           return `${(p0 * P[0] + p1 * P[2] + p2 * P[4] + p3 * P[6]).toFixed(1)} ${(p0 * P[1] + p1 * P[3] + p2 * P[5] + p3 * P[7]).toFixed(1)}`;
         };
         const run = (from: number) => { let s = `M${at(from)}`; for (let i = 1; i <= 6; i++) s += `L${at(from + ((t - from) * i) / 6)}`; return s; };
-        w += run(t - TRAIL);
-        d += run(t - HEAD);
+        TAIL.forEach((f, i) => { tails[i] += run(t - TRAIL * f); });
+        const head = at(t);
+        heads += `M${head}L${head}`;
       };
       const path = (P: number[]) => `M${P[0].toFixed(1)} ${P[1].toFixed(1)}C${P.slice(2).map((v) => v.toFixed(1)).join(" ")}`;
       const tilt = TILT + Math.sin(angle * SWAY_RATE) * SWAY;
@@ -101,11 +119,24 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
       });
       links.current?.setAttribute("d", l);
       inLinks.current?.setAttribute("d", n);
-      trails.current?.setAttribute("d", w);
-      packets.current?.setAttribute("d", d);
-      const spin = (now / 1000) * BRAIN_SPIN, c = Math.cos(spin), s = Math.sin(spin);
-      brains.current.forEach((el, i) => el?.setAttribute("transform",
-        `translate(${(BALL.x + s * BRAIN_DEPTH[i]).toFixed(2)} ${BALL.y - 18}) scale(${(BRAIN_S * (Math.abs(c) < .04 ? Math.sign(c || 1) * .04 : c)).toFixed(3)} ${BRAIN_S}) translate(-12 -12)`));
+      tails.forEach((t, i) => comets.current[i]?.setAttribute("d", t));
+      comets.current[TAIL.length]?.setAttribute("d", heads);
+      // the near half of the brain is drawn bright, the far half dim behind it
+      const spin = (now / 1000) * BRAIN_SPIN;
+      let bf = "", bb = "";
+      for (const wire of BRAIN3D) {
+        let prev: V | null = null;
+        for (const p of wire) {
+          const q = turn(p, spin, BRAIN_TILT);
+          if (prev) {
+            const seg = `M${(BALL.x + prev[0]).toFixed(1)} ${(BRAIN_Y - prev[1]).toFixed(1)}L${(BALL.x + q[0]).toFixed(1)} ${(BRAIN_Y - q[1]).toFixed(1)}`;
+            if (q[2] + prev[2] > 0) bf += seg; else bb += seg;
+          }
+          prev = q;
+        }
+      }
+      brainFront.current?.setAttribute("d", bf);
+      brainBack.current?.setAttribute("d", bb);
       label(hover.current >= 0 ? hover.current : near);
     };
     const tick = (now: number) => {
@@ -201,13 +232,13 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
       ))}
 
       <path ref={links} className="links" />
-      <path ref={trails} className="trails" />
-      <path ref={packets} className="packets" />
+      {[...TAIL, 0].map((_, i) => <path key={i} ref={(el) => { comets.current[i] = el; }} className={i < TAIL.length ? `comet c${i}` : "comet head"} />)}
       <g className="core">
         <circle className="halo" cx={BALL.x} cy={BALL.y} r={CORE_R + 8} />
         <circle className="orbit" cx={BALL.x} cy={BALL.y} r={CORE_R + 13} />
         <circle className="ringc" cx={BALL.x} cy={BALL.y} r={CORE_R} />
-        {BRAIN_DEPTH.map((dz, i) => <path key={dz} ref={(el) => { brains.current[i] = el; }} className={`brain${i === 1 ? "" : " layer"}`} d={BRAIN} transform={`translate(${BALL.x} ${BALL.y - 18}) scale(${BRAIN_S}) translate(-12 -12)`} />)}
+        <path ref={brainBack} className="brain3d back" />
+        <path ref={brainFront} className="brain3d" />
         <text x={BALL.x} y={BALL.y + 32} textAnchor="middle">AI CORE</text>
       </g>
 
