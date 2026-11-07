@@ -225,7 +225,7 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
       <text className="title" x={BALL.x} y="40" textAnchor="middle" fill="url(#titleGlow)">TRENDX AI COMMAND CORE</text>
       <rect className="titleline" x={BALL.x - 190} y="49" width="380" height="1.6" fill="url(#titleLine)" />
       <path className="titlegem" d={`M${BALL.x} 45l5 5-5 5-5-5Z`} />
-      <text className="nh" x="0" y={inY(0) - 10}>INPUT LAYER</text>
+      <text className="nh" x="0" y={inY(0) - 10}>STRATEGY LAYER</text>
       <text ref={focus} className="focus" x={BALL.x} y={BALL.y - BALL.r - 34} textAnchor="middle" />
 
       <path ref={inLinks} className="inlinks" />
