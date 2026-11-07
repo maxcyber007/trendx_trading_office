@@ -357,6 +357,8 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .net .mnode .robot path, .net .mnode .robot rect { fill: none; stroke: var(--neon); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; animation: none; }
 .net .mnode.boost .robot path, .net .mnode.boost .robot rect { stroke: var(--yellow); } .net .mnode.stop .robot path, .net .mnode.stop .robot rect { stroke: var(--red); }
 .net .mnode .robot .eye { fill: var(--cyan); animation: none; } .net .mnode.stop .robot .eye { fill: var(--red); }
+.net .mnode .eyebeam { opacity: var(--eye, 0); pointer-events: none; }
+.net .mnode .robot .eyeglow { fill: var(--neon); opacity: var(--eye, 0); filter: blur(2.5px); animation: none; } .net .mnode.stop .robot .eyeglow { fill: var(--red); }
 .focus { fill: #d6ffe9; font-size: 15px; font-weight: 700; letter-spacing: .04em; }
 .projector .pad { fill: rgba(57, 255, 106, .05); stroke: var(--neon); stroke-width: 1.2; transform-box: fill-box; transform-origin: center; animation: padPulse 2.8s ease-in-out infinite; }
 .projector .pad.two { stroke: var(--cyan); animation-delay: .35s; } .projector .pad.core3 { fill: rgba(57, 255, 106, .42); stroke-width: 2; animation-delay: .7s; }
