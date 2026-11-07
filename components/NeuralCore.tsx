@@ -5,7 +5,7 @@ import { FAMILIES, MODEL_FAMILIES, MODEL_NAMES, modelCode } from "@/lib/models";
 const space = Audiowide({ subsets: ["latin"], weight: "400", variable: "--font-title" });
 
 const W = 910, H = 860, IN_W = 172, BALL = { x: 468, y: 418, r: 272 }, CORE_R = 56, TILT = .34, SPEED = .22;
-const PAD_Y = 772, RISE = [-44, -26, -9, 12, 30, 47], NODE_W = 44, NODE_H = 44;
+const PAD_Y = 772, RISE = [-44, -26, -9, 12, 30, 47], NODE_W = 50, NODE_H = 19, NODE_Y = 3;
 // light shooting up from the bottom edge into the projector
 const EDGE_Y = H - 5;
 const BRAIN = "M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18ZM12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18ZM15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4M17.599 6.5a3 3 0 0 0 .399-1.375M6.003 5.125A3 3 0 0 0 6.401 6.5M3.477 10.896a4 4 0 0 1 .585-.396M19.938 10.5a4 4 0 0 1 .585.396M6 18a4 4 0 0 1-1.967-.516M19.967 17.484A4 4 0 0 1 18 18";
@@ -81,8 +81,6 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
         g.setAttribute("transform", `translate(${px(x)} ${py(y)}) scale(${(.92 + z * .24).toFixed(3)})`);
         g.setAttribute("opacity", (seen * (.75 + z * .25)).toFixed(2));
         g.style.pointerEvents = seen > 0 ? "auto" : "none";
-        // the glow rises and falls with the turn, so a node fades in at the front and out toward the back
-        g.style.setProperty("--glow", Math.max(0, Math.min(1, (z - .02) / .3)).toFixed(2));
         if (z > .02) l += `M${px(x)} ${py(y)}L${BALL.x} ${BALL.y}`;
       });
       front.current?.setAttribute("d", f);
@@ -197,11 +195,9 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
         return (
           <g key={name} ref={(el) => { nodes.current[k] = el; }} data-k={k} className={`mnode ${st > 0 ? "boost" : st < 0 ? "stop" : ""}`}>
             <title>{`${modelCode(k + 1)} ${name}${st > 0 ? " (x2)" : st < 0 ? " (STOP)" : ""}`}</title>
-            <rect className="glow" x={-NODE_W / 2} y={-NODE_H / 2} width={NODE_W} height={NODE_H} rx={NODE_H / 2} />
-            <rect x={-NODE_W / 2} y={-NODE_H / 2} width={NODE_W} height={NODE_H} rx={NODE_H / 2} />
-            <rect className="tube" x={-NODE_W / 2} y={-NODE_H / 2} width={NODE_W} height={NODE_H} rx={NODE_H / 2} />
+            <rect x={-NODE_W / 2} y={NODE_Y} width={NODE_W} height={NODE_H} rx={NODE_H / 2} />
             <g className="robot"><path d="M0 -17v3M-9 -9h-2v5h2M9 -9h2v5h-2M-4 -3h8" /><rect x="-9" y="-14" width="18" height="14" rx="4" /><circle className="eye" cx="-4" cy="-8" r="1.7" /><circle className="eye" cx="4" cy="-8" r="1.7" /></g>
-            <text className="code" y="13" textAnchor="middle">{modelCode(k + 1)}</text>
+            <text className="code" y="16.5" textAnchor="middle">{modelCode(k + 1)}</text>
           </g>
         );
       })}
