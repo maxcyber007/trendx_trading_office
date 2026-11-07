@@ -5,6 +5,8 @@ import { FAMILIES, MODEL_FAMILIES, MODEL_NAMES, modelCode } from "@/lib/models";
 const space = Audiowide({ subsets: ["latin"], weight: "400", variable: "--font-title" });
 
 const W = 910, H = 860, IN_W = 172, BALL = { x: 468, y: 418, r: 272 }, CORE_R = 56, TILT = .34, SPEED = .22;
+// the ball also nods up and down, so all 39 models get their turn at the front centre
+const SWAY = 1.45, SWAY_RATE = .27;
 const PAD_Y = 772, RISE = [-44, -26, -9, 12, 30, 47], NODE_W = 50, NODE_H = 19, NODE_Y = 3;
 // light shooting up from the bottom edge into the projector
 const EDGE_Y = H - 5;
@@ -27,9 +29,9 @@ const WIRES: V[][] = [
   ...[-.72, -.4, 0, .4, .72].map((y) => { const r = Math.sqrt(1 - y * y); return circle((t) => [Math.cos(t) * r, y, Math.sin(t) * r]); }),
 ];
 // turns a point on the ball, then tips the ball toward the viewer
-const turn = ([x, y, z]: V, angle: number): V => {
+const turn = ([x, y, z]: V, angle: number, tilt: number): V => {
   const c = Math.cos(angle), s = Math.sin(angle), x1 = x * c + z * s, z1 = z * c - x * s;
-  return [x1, y * Math.cos(TILT) - z1 * Math.sin(TILT), y * Math.sin(TILT) + z1 * Math.cos(TILT)];
+  return [x1, y * Math.cos(tilt) - z1 * Math.sin(tilt), y * Math.sin(tilt) + z1 * Math.cos(tilt)];
 };
 const px = (x: number) => (BALL.x + x * BALL.r).toFixed(1), py = (y: number) => (BALL.y - y * BALL.r).toFixed(1);
 // where a straight run from the side meets the ball's outline
@@ -61,10 +63,11 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
     };
     const draw = () => {
       let f = "", b = "", l = "", near = 0, nearZ = -2;
+      const tilt = TILT + Math.sin(angle * SWAY_RATE) * SWAY;
       for (const wire of WIRES) {
         let prev: V | null = null;
         for (const p of wire) {
-          const q = turn(p, angle);
+          const q = turn(p, angle, tilt);
           if (prev) {
             const seg = `M${px(prev[0])} ${py(prev[1])}L${px(q[0])} ${py(q[1])}`;
             if (q[2] + prev[2] > 0) f += seg; else b += seg;
@@ -73,7 +76,7 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
         }
       }
       SPOTS.forEach((spot, k) => {
-        const [x, y, z] = turn(spot, angle), g = nodes.current[k];
+        const [x, y, z] = turn(spot, angle, tilt), g = nodes.current[k];
         if (z > nearZ) { nearZ = z; near = k; }
         if (!g) return;
         // nodes on the far side stay hidden; they fade in and out at the edge of the ball
