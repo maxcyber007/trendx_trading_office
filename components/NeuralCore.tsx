@@ -10,6 +10,11 @@ const SWAY = 1.45, SWAY_RATE = .27;
 // each model is joined to the core by a curved fibre; light waves run along it into the core
 // the waves are small comets: a bright head with a tail that thins and fades behind it
 const BEND = .26, PACKET_RATE = .5, TRAIL = .2, TAIL = [1, .55, .25];
+// one colour per input family, carried by its fibres, its comets and a dot on each of its models
+const FAMILY_COLORS = ["#39ff6a", "#35e0ff", "#4d8bff", "#a66bff", "#ff5cf0", "#ff7aa8", "#ff9a3d", "#ffd23d", "#c6ff3d", "#3dffc4", "#9ee7ff", "#ffb98a", "#d9a8ff"];
+const fc = (f: number) => FAMILY_COLORS[f % FAMILY_COLORS.length];
+// drawing order per family: input fibre, core fibre, comet tail layers, comet head
+const SLOTS = ["inlinks", "links", ...TAIL.map((_, i) => `comet c${i}`), "comet head"];
 // a wire brain built in 3D, shaped like a real one (cerebrum, cerebellum, stem), spinning on its upright axis
 const BRAIN_SPIN = .8, BRAIN_TILT = .2, BRAIN_Y = BALL.y - 12, BRAIN_K = .85;
 const PAD_Y = 772, RISE = [-44, -26, -9, 12, 30, 47], NODE_W = 50, NODE_H = 19, NODE_Y = 3;
@@ -74,7 +79,7 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
   const count = FAMILIES.map((_, f) => MODEL_FAMILIES.filter((x) => x === f).length);
   const [lx, ly] = rim(BALL.y - 170, 1), [sx, sy] = rim(BALL.y + 170, 1);
   const toLong = curve(lx, ly, OUT_X, LONG_Y), toShort = curve(sx, sy, OUT_X, SHORT_Y);
-  const links = useRef<SVGPathElement>(null), inLinks = useRef<SVGPathElement>(null), comets = useRef<(SVGPathElement | null)[]>([]);
+  const fibres = useRef<(SVGPathElement | null)[][]>(SLOTS.map(() => []));
   const brainFront = useRef<SVGPathElement>(null), brainBack = useRef<SVGPathElement>(null);
   const nodes = useRef<(SVGGElement | null)[]>([]), focus = useRef<SVGTextElement>(null), hover = useRef(-1);
 
@@ -87,20 +92,20 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
       focus.current.textContent = `${modelCode(k + 1)}  ${MODEL_NAMES[k]}`;
     };
     const draw = (now: number) => {
-      let l = "", n = "", near = 0, nearZ = -2;
-      const tails = TAIL.map(() => "");
-      let heads = "";
+      let near = 0, nearZ = -2;
+      // out[slot][family] collects the path for that layer and colour
+      const out = SLOTS.map(() => FAMILIES.map(() => ""));
       // a comet along a cubic curve: tail layers get thinner and dimmer the further back they reach
-      const wave = (P: number[], t: number) => {
+      const wave = (P: number[], t: number, f: number) => {
         const at = (u: number) => {
           u = Math.max(0, u);
           const a = 1 - u, p0 = a * a * a, p1 = 3 * a * a * u, p2 = 3 * a * u * u, p3 = u * u * u;
           return `${(p0 * P[0] + p1 * P[2] + p2 * P[4] + p3 * P[6]).toFixed(1)} ${(p0 * P[1] + p1 * P[3] + p2 * P[5] + p3 * P[7]).toFixed(1)}`;
         };
         const run = (from: number) => { let s = `M${at(from)}`; for (let i = 1; i <= 6; i++) s += `L${at(from + ((t - from) * i) / 6)}`; return s; };
-        TAIL.forEach((f, i) => { tails[i] += run(t - TRAIL * f); });
+        TAIL.forEach((len, i) => { out[2 + i][f] += run(t - TRAIL * len); });
         const head = at(t);
-        heads += `M${head}L${head}`;
+        out[2 + TAIL.length][f] += `M${head}L${head}`;
       };
       const path = (P: number[]) => `M${P[0].toFixed(1)} ${P[1].toFixed(1)}C${P.slice(2).map((v) => v.toFixed(1)).join(" ")}`;
       const tilt = TILT + Math.sin(angle * SWAY_RATE) * SWAY;
@@ -120,18 +125,16 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
           const X = BALL.x + x * BALL.r, Y = BALL.y - y * BALL.r, dx = BALL.x - X, dy = BALL.y - Y, sec = now / 1000;
           const b1 = BEND * (Math.sin(k * 2.17) + .35 * Math.sin(sec * .6 + k)), b2 = BEND * (.55 * Math.cos(k * 1.31) - .3 * Math.sin(sec * .45 + k * 1.7));
           const toCore = [X, Y, X + dx * .33 - dy * b1, Y + dy * .33 + dx * b1, X + dx * .7 - dy * b2, Y + dy * .7 + dx * b2, BALL.x, BALL.y];
-          l += path(toCore);
-          wave(toCore, ((now / 1000) * PACKET_RATE + k * .618) % 1);
+          const fam = MODEL_FAMILIES[k];
+          out[1][fam] += path(toCore);
+          wave(toCore, ((now / 1000) * PACKET_RATE + k * .618) % 1, fam);
           // its input family feeds it from the left
-          const iy = inY(MODEL_FAMILIES[k]) + 13, mx = (IN_W + X) / 2, fromInput = [IN_W, iy, mx, iy, mx, Y, X, Y];
-          n += path(fromInput);
-          wave(fromInput, ((now / 1000) * PACKET_RATE * .8 + k * .382) % 1);
+          const iy = inY(fam) + 13, mx = (IN_W + X) / 2, fromInput = [IN_W, iy, mx, iy, mx, Y, X, Y];
+          out[0][fam] += path(fromInput);
+          wave(fromInput, ((now / 1000) * PACKET_RATE * .8 + k * .382) % 1, fam);
         }
       });
-      links.current?.setAttribute("d", l);
-      inLinks.current?.setAttribute("d", n);
-      tails.forEach((t, i) => comets.current[i]?.setAttribute("d", t));
-      comets.current[TAIL.length]?.setAttribute("d", heads);
+      out.forEach((row, slot) => row.forEach((d, f) => fibres.current[slot][f]?.setAttribute("d", d)));
       // the near half of the brain is drawn bright, the far half dim behind it
       const spin = (now / 1000) * BRAIN_SPIN;
       let bf = "", bb = "";
@@ -152,7 +155,7 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
     };
     const tick = (now: number) => {
       frame = requestAnimationFrame(tick);
-      if (now - last < 33 || !links.current?.getBoundingClientRect().width) return;   // about 30 frames a second, nothing while hidden
+      if (now - last < 33 || !focus.current?.getBoundingClientRect().width) return;   // about 30 frames a second, nothing while hidden
       if (hover.current < 0) angle += ((now - last) / 1000) * SPEED;
       last = now;
       draw(now);
@@ -231,11 +234,10 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
       <text className="nh" x={OUT_X} y={LONG_Y - OUT_H / 2 - 12}>OUTPUT</text>
       <text ref={focus} className="focus" x={BALL.x} y={BALL.y - BALL.r - 34} textAnchor="middle" />
 
-      <path ref={inLinks} className="inlinks" />
       <g className="edges"><path d={toLong} /><path className="redge" d={toShort} /></g>
 
       {FAMILIES.map((name, i) => (
-        <g key={name} className="inode">
+        <g key={name} className="inode" style={{ "--fc": fc(i) } as React.CSSProperties}>
           <rect y={inY(i)} width={IN_W} height={IN_H} rx={IN_H / 2} />
           <circle cx="12" cy={inY(i) + 13} r="3.5" />
           <text x="22" y={inY(i) + 17}>{name}</text>
@@ -243,8 +245,7 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
         </g>
       ))}
 
-      <path ref={links} className="links" />
-      {[...TAIL, 0].map((_, i) => <path key={i} ref={(el) => { comets.current[i] = el; }} className={i < TAIL.length ? `comet c${i}` : "comet head"} />)}
+      {SLOTS.map((cls, slot) => FAMILIES.map((name, f) => <path key={`${slot}-${name}`} ref={(el) => { fibres.current[slot][f] = el; }} className={cls} style={{ "--fc": fc(f) } as React.CSSProperties} />))}
       <g className="core">
         <circle className="halo" cx={BALL.x} cy={BALL.y} r={CORE_R + 8} />
         <circle className="orbit" cx={BALL.x} cy={BALL.y} r={CORE_R + 13} />
@@ -258,11 +259,12 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
       {MODEL_NAMES.map((name, k) => {
         const st = states.get(k + 1) ?? 0;
         return (
-          <g key={name} ref={(el) => { nodes.current[k] = el; }} data-k={k} className={`mnode ${st > 0 ? "boost" : st < 0 ? "stop" : ""}`}>
+          <g key={name} ref={(el) => { nodes.current[k] = el; }} data-k={k} className={`mnode ${st > 0 ? "boost" : st < 0 ? "stop" : ""}`} style={{ "--fc": fc(MODEL_FAMILIES[k]) } as React.CSSProperties}>
             <title>{`${modelCode(k + 1)} ${name}${st > 0 ? " (x2)" : st < 0 ? " (STOP)" : ""}`}</title>
             <rect x={-NODE_W / 2} y={NODE_Y} width={NODE_W} height={NODE_H} rx={NODE_H / 2} />
             <g className="eyebeam" fill={`url(#${st < 0 ? "eyeBeamStop" : "eyeBeam"})`}><polygon points="-5.2,-8 -2.8,-8 4,88 -24,88" /><polygon points="2.8,-8 5.2,-8 24,88 -4,88" /></g>
             <g className="robot"><path d="M0 -17v3M-9 -9h-2v5h2M9 -9h2v5h-2M-4 -3h8" /><rect x="-9" y="-14" width="18" height="14" rx="4" /><circle className="eyeglow" cx="-4" cy="-8" r="4.5" /><circle className="eyeglow" cx="4" cy="-8" r="4.5" /><circle className="eye" cx="-4" cy="-8" r="1.7" /><circle className="eye" cx="4" cy="-8" r="1.7" /></g>
+            <circle className="tag" cy="-18.6" r="2.2" />
             <text className="code" y="16.5" textAnchor="middle">{modelCode(k + 1)}</text>
           </g>
         );
