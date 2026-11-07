@@ -61,8 +61,6 @@ const turn = ([x, y, z]: V, angle: number, tilt: number): V => {
   return [x1, y * Math.cos(tilt) - z1 * Math.sin(tilt), y * Math.sin(tilt) + z1 * Math.cos(tilt)];
 };
 const px = (x: number) => (BALL.x + x * BALL.r).toFixed(1), py = (y: number) => (BALL.y - y * BALL.r).toFixed(1);
-// where a straight run from the side meets the ball's outline
-const rim = (y: number, side: number) => { const dy = Math.max(-.92, Math.min(.92, (y - BALL.y) / BALL.r)); return [BALL.x + side * Math.sqrt(1 - dy * dy) * BALL.r, BALL.y + dy * BALL.r]; };
 
 // the whole picture leans a little toward the pointer
 const lean = (e: React.PointerEvent<SVGSVGElement>) => {
@@ -74,8 +72,13 @@ const rest = (e: React.PointerEvent<SVGSVGElement>) => { e.currentTarget.style.r
 
 export default function NeuralCore({ states, side }: { states: Map<number, number>; side: number }) {
   const count = FAMILIES.map((_, f) => MODEL_FAMILIES.filter((x) => x === f).length);
-  const [lx, ly] = rim(BALL.y - 170, 1), [sx, sy] = rim(BALL.y + 170, 1);
-  const toLong = curve(lx, ly, OUT_X, LONG_Y), toShort = curve(sx, sy, OUT_X, SHORT_Y);
+  // LONG and SHORT keep their original run from the ball's edge, now led out of the AI CORE first
+  const fromCore = (y: number, out: number) => {
+    const dy = (y - BALL.y) / BALL.r, x = BALL.x + Math.sqrt(1 - dy * dy) * BALL.r, a = Math.atan2(y - BALL.y, x - BALL.x);
+    const cx = BALL.x + CORE_R * Math.cos(a), cy = BALL.y + CORE_R * Math.sin(a);
+    return `M${cx.toFixed(1)} ${cy.toFixed(1)} C${(cx + Math.cos(a) * 60).toFixed(1)} ${(cy + Math.sin(a) * 60).toFixed(1)} ${(x - 60).toFixed(1)} ${y} ${x.toFixed(1)} ${y}` + curve(x, y, OUT_X, out).slice(curve(x, y, OUT_X, out).indexOf(" C"));
+  };
+  const toLong = fromCore(BALL.y - 170, LONG_Y), toShort = fromCore(BALL.y + 170, SHORT_Y);
   const links = useRef<SVGPathElement>(null), inLinks = useRef<SVGPathElement>(null), comets = useRef<(SVGPathElement | null)[]>([]);
   const brainFront = useRef<SVGPathElement>(null), brainBack = useRef<SVGPathElement>(null);
   const nodes = useRef<(SVGGElement | null)[]>([]), focus = useRef<SVGTextElement>(null), hover = useRef(-1);
