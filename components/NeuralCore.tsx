@@ -271,7 +271,7 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
 
       <g className="sparks">
         <circle r="2.6"><animateMotion dur="2.4s" repeatCount="indefinite" path={toLong} /></circle>
-        <circle className="red" r="2.6"><animateMotion dur="2.4s" begin="1.2s" repeatCount="indefinite" path={toShort} /></circle>
+        <circle className="red" r="2.6"><animateMotion dur="2.4s" repeatCount="indefinite" path={toShort} /></circle>
       </g>
     </svg>
   );
