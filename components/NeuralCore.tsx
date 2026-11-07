@@ -192,9 +192,11 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
       {MODEL_NAMES.map((name, k) => {
         const st = states.get(k + 1) ?? 0;
         return (
-          <g key={name} ref={(el) => { nodes.current[k] = el; }} data-k={k} className={`mnode ${st > 0 ? "boost" : st < 0 ? "stop" : ""}`}>
+          <g key={name} ref={(el) => { nodes.current[k] = el; }} data-k={k} className={`mnode ${k % 2 ? "alt" : ""} ${st > 0 ? "boost" : st < 0 ? "stop" : ""}`}>
             <title>{`${modelCode(k + 1)} ${name}${st > 0 ? " (x2)" : st < 0 ? " (STOP)" : ""}`}</title>
+            <rect className="glow" x={-NODE_W / 2} y={-NODE_H / 2} width={NODE_W} height={NODE_H} rx={NODE_H / 2} />
             <rect x={-NODE_W / 2} y={-NODE_H / 2} width={NODE_W} height={NODE_H} rx={NODE_H / 2} />
+            <rect className="tube" x={-NODE_W / 2} y={-NODE_H / 2} width={NODE_W} height={NODE_H} rx={NODE_H / 2} />
             <text className="code" y="4" textAnchor="middle">{modelCode(k + 1)}</text>
           </g>
         );
