@@ -9,6 +9,8 @@ const W = 910, H = 860, IN_W = 172, BALL = { x: 468, y: 418, r: 272 }, CORE_R = 
 const SWAY = 1.45, SWAY_RATE = .27;
 // each model is joined to the core by a curved fibre; light waves run along it into the core
 // the waves are small comets: a bright head with a tail that thins and fades behind it
+// robots take turns lighting their eyes, each at its own moment in the cycle, wherever they are on the ball
+const EYE_CYCLE = 7;
 const BEND = .26, PACKET_RATE = .5, TRAIL = .2, TAIL = [1, .55, .25];
 // a wire brain built in 3D, shaped like a real one (cerebrum, cerebellum, stem), spinning on its upright axis
 const BRAIN_SPIN = .8, BRAIN_TILT = .2, BRAIN_Y = BALL.y - 12, BRAIN_K = .85;
@@ -113,8 +115,6 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
         g.setAttribute("transform", `translate(${px(x)} ${py(y)}) scale(${(.92 + z * .24).toFixed(3)})`);
         g.setAttribute("opacity", (seen * (.75 + z * .25)).toFixed(2));
         g.style.pointerEvents = seen > 0 ? "auto" : "none";
-        // the node nearest the viewer lights its eyes, fading as it turns away
-        g.style.setProperty("--eye", Math.max(0, Math.min(1, (z - .9) / .07)).toFixed(2));
         if (z > .02) {
           // each fibre has its own soft S-bend that drifts slowly, like a strand floating in water
           const X = BALL.x + x * BALL.r, Y = BALL.y - y * BALL.r, dx = BALL.x - X, dy = BALL.y - Y, sec = now / 1000;
@@ -256,7 +256,7 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
       {MODEL_NAMES.map((name, k) => {
         const st = states.get(k + 1) ?? 0;
         return (
-          <g key={name} ref={(el) => { nodes.current[k] = el; }} data-k={k} className={`mnode ${st > 0 ? "boost" : st < 0 ? "stop" : ""}`}>
+          <g key={name} ref={(el) => { nodes.current[k] = el; }} data-k={k} className={`mnode ${st > 0 ? "boost" : st < 0 ? "stop" : ""}`} style={{ "--eyeAt": `${(-((k * .618) % 1) * EYE_CYCLE).toFixed(2)}s` } as React.CSSProperties}>
             <title>{`${modelCode(k + 1)} ${name}${st > 0 ? " (x2)" : st < 0 ? " (STOP)" : ""}`}</title>
             <rect x={-NODE_W / 2} y={NODE_Y} width={NODE_W} height={NODE_H} rx={NODE_H / 2} />
             <g className="robot"><path d="M0 -17v3M-9 -9h-2v5h2M9 -9h2v5h-2M-4 -3h8" /><rect x="-9" y="-14" width="18" height="14" rx="4" /><circle className="eyeglow" cx="-4" cy="-8" r="4.5" /><circle className="eyeglow" cx="4" cy="-8" r="4.5" /><circle className="eye" cx="-4" cy="-8" r="1.7" /><circle className="eye" cx="4" cy="-8" r="1.7" /></g>
