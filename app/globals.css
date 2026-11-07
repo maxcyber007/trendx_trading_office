@@ -421,3 +421,10 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
   .brand h1 { font-size: 20px; } .ai { display: none; }
   .day b { font-size: 9px; }
 }
+
+/* the calendar and monthly cards stay still: entrance animations only, no looping glow, flow or edge beam */
+.calendar h2 .ico, .monthly h2 .ico { animation: none; }
+.calendar .day.up, .calendar .day.down, .calendar .day.now { animation: fadeUp .45s ease-out .45s backwards; }
+.monthly .half.up span, .monthly .half.down span { animation: barRise .9s cubic-bezier(.2, .9, .25, 1.1) calc(var(--i) * 55ms) backwards; }
+.monthly .bars .cur { animation: none; }
+.left .calendar::after, .left .monthly::after { content: none; }

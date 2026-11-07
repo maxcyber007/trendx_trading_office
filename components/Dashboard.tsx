@@ -78,7 +78,7 @@ function Calendar({ daily, money, today }: { daily: Data["daily"]; money: Money;
   const inMonth = daily.filter((x) => x.d.startsWith(month));
   const total = inMonth.reduce((s, x) => s + x.pl, 0);
   return (
-    <section className="card">
+    <section className="card calendar">
       <header><h2><CalIcon /> PROFIT CALENDAR</h2>
         <span className="nav"><button onClick={() => shift(-1)} aria-label="เดือนก่อน">‹</button>{new Date(Date.UTC(y, m - 1, 1)).toLocaleString("en-US", { month: "long", timeZone: "UTC" })} {y}<button onClick={() => shift(1)} aria-label="เดือนถัดไป">›</button></span>
         <b className={sign(total)}>Month {money(total, true)}</b></header>
