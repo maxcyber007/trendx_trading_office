@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { MODEL_NAMES, modelCode } from "@/lib/models";
 import NeuralCore from "./NeuralCore";
-import { AiChip, Bars, Calendar as CalIcon, ChartUp, Clock, Coins, Layers, Logo, Logout, Neural, Person, Power, Pulse, Shield, Signal, Trophy, Users } from "./icons";
+import { AiChip, Bars, Calendar as CalIcon, ChartUp, Clock, Coins, Expand, Layers, Logo, Logout, Neural, Person, Power, Pulse, Shield, Shrink, Signal, Trophy, Users } from "./icons";
 
 type Account = { id: string; login: string; server: string; company: string; currency: string; is_demo: boolean; name: string | null };
 type Position = { ticket: number; symbol: string; type: number; magic: number; volume: number; open_price: number; profit: number };
@@ -26,6 +26,13 @@ type Money = (v: number, plus?: boolean, digits?: number) => string;
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const sign = (v: number) => (v > 0 ? "pos" : v < 0 ? "neg" : "");
+// Safari on iPad and older browsers still use the webkit names
+type FullDoc = Document & { webkitFullscreenElement?: Element; webkitExitFullscreen?: () => Promise<void> };
+type FullEl = HTMLElement & { webkitRequestFullscreen?: () => Promise<void> };
+const isFull = () => !!(document.fullscreenElement ?? (document as FullDoc).webkitFullscreenElement);
+// already running from the home screen: there is no browser bar left to hide
+const installed = () => matchMedia("(display-mode: fullscreen), (display-mode: standalone)").matches || !!(navigator as Navigator & { standalone?: boolean }).standalone;
+
 // one id per browser, so several tabs count as one online user
 const visitorId = () => {
   const fresh = () => crypto.randomUUID();
@@ -187,6 +194,17 @@ function Monitor({ sys, alive }: { sys?: Sys; alive: boolean }) {
 export default function Dashboard() {
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState("");
+  const [full, setFull] = useState(false);
+  const [canFull, setCanFull] = useState(false);
+  const [hint, setHint] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setFull(isFull());
+    setCanFull(!installed());
+    document.addEventListener("fullscreenchange", sync);
+    document.addEventListener("webkitfullscreenchange", sync);
+    return () => { document.removeEventListener("fullscreenchange", sync); document.removeEventListener("webkitfullscreenchange", sync); };
+  }, []);
 
   useEffect(() => {
     let live = true;
@@ -200,6 +218,14 @@ export default function Dashboard() {
     const t = setInterval(load, 3000);
     return () => { live = false; clearInterval(t); };
   }, []);
+
+  const toggleFull = () => {
+    const doc = document as FullDoc, root = document.documentElement as FullEl;
+    const run = isFull() ? (doc.exitFullscreen ?? doc.webkitExitFullscreen)?.bind(doc) : (root.requestFullscreen ?? root.webkitRequestFullscreen)?.bind(root);
+    // iPhone Safari cannot make a page full screen
+    if (!run) { setHint(true); return; }
+    Promise.resolve(run()).catch(() => setHint(true));
+  };
 
   const logout = () => fetch("/api/login", { method: "DELETE" }).then((r) => { if (!r.ok) throw new Error(); location.href = "/login"; }).catch(() => setError("ออกจากระบบไม่สำเร็จ"));
 
@@ -303,7 +329,9 @@ export default function Dashboard() {
         <span className="acct" title={account.company}>Broker : {account.company || "-"}</span><span className="acct" title={account.server}>Server : {account.server}</span>
         <span>Server Time : {state?.server_time?.replaceAll("-", ".") ?? "-"}</span><span className={state && state.age > 30 ? "neg" : ""}>Updated : {state ? `${state.age}s ago` : "-"}</span>{error && <span className="neg">{error}</span>}
         {data.online !== null && <span className="online"><Users /> Online Users : {data.online}</span>}
-        <button type="button" className="logout" onClick={logout}><Logout /> Logout</button></footer>
+        <button type="button" className="logout" onClick={logout}><Logout /> Logout</button>
+        {canFull && <button type="button" className="fullbtn" onClick={toggleFull} aria-label={full ? "Exit full screen" : "Full screen"} title={full ? "Exit full screen" : "Full screen"}>{full ? <Shrink /> : <Expand />}</button>}</footer>
+      {hint && <button type="button" className="fullhint" onClick={() => setHint(false)}>เบราว์เซอร์นี้เปิดเต็มจอจากปุ่มไม่ได้ บน iPhone ให้กด Share แล้วเลือก Add to Home Screen จากนั้นเปิดจากไอคอนบนหน้าจอหลัก</button>}
     </div>
   );
 }

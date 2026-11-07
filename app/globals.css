@@ -134,6 +134,9 @@ td { padding: 2px 4px; white-space: nowrap; }
 .status { position: sticky; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; padding: 2px 12px; background: #06140c; border-top: 1px solid var(--edge); font-size: 12px; color: var(--dim); }
 .acct { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .status b { color: var(--neon); } .status .dot { background: var(--neon); }
+.fullbtn { display: inline-grid; place-items: center; width: 24px; height: 20px; padding: 0; border: 0; background: none; color: var(--neon); }
+.fullbtn:hover, .fullbtn:focus-visible { filter: drop-shadow(0 0 5px var(--neon)); outline: none; }
+.fullhint { position: fixed; right: 12px; bottom: 34px; z-index: 5; max-width: min(340px, calc(100vw - 24px)); padding: 10px 12px; border: 1px solid var(--neon2); border-radius: 8px; background: #06140c; color: var(--text); font-size: 13px; text-align: left; }
 .online { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; color: var(--neon); }
 .online + .logout { margin-left: 0; }
 .logout { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; padding: 0 8px; border: 0; background: none; color: var(--neon); font-size: 12px; line-height: 19px; transition: text-shadow .2s; }
