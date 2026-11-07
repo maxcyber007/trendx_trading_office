@@ -350,7 +350,7 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .core .ringc { fill: #020a06; }
 .wire { fill: none; stroke: #5cf5ae; stroke-width: .8; opacity: .55; } .wire.back { stroke: #2bd08a; stroke-width: .6; opacity: .2; }
 .rimline { fill: none; stroke: var(--neon); stroke-width: 1.2; opacity: .55; filter: drop-shadow(0 0 5px var(--neon)); }
-.links { fill: none; stroke: #5cf5ae; stroke-width: .9; opacity: .3; filter: drop-shadow(0 0 2px var(--neon)); }
+.links { fill: none; stroke: #5cf5ae; stroke-width: .45; opacity: .3; filter: drop-shadow(0 0 2px var(--neon)); }
 .inlinks { fill: none; stroke: #5cf5ae; stroke-width: .7; opacity: .22; }
 .comet { fill: none; stroke: var(--neon); stroke-linecap: round; stroke-linejoin: round; }
 .comet.c0 { stroke-width: .45; opacity: .18; } .comet.c1 { stroke-width: .7; opacity: .35; } .comet.c2 { stroke: #9dffbe; stroke-width: .95; opacity: .6; }
