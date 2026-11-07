@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { MODEL_NAMES, modelCode } from "@/lib/models";
 import NeuralCore from "./NeuralCore";
-import { AiChip, Bars, Calendar as CalIcon, ChartUp, Clock, Coins, Expand, Layers, Logo, Logout, Neural, Person, Power, Pulse, Shield, Shrink, Signal, Trophy, Users } from "./icons";
+import { AiChip, Bars, Calendar as CalIcon, ChartUp, Clock, Coins, Expand, Eye, Layers, Logo, Logout, Neural, Person, Power, Pulse, Shield, Shrink, Signal, Trophy } from "./icons";
 
 type Account = { id: string; login: string; server: string; company: string; currency: string; is_demo: boolean; name: string | null };
 type Position = { ticket: number; symbol: string; type: number; magic: number; volume: number; open_price: number; profit: number };
@@ -335,7 +335,7 @@ export default function Dashboard() {
         <span>Login : {account.login}{account.is_demo ? " (Demo)" : ""}</span>
         <span className="acct" title={account.company}>Broker : {account.company || "-"}</span><span className="acct" title={account.server}>Server : {account.server}</span>
         <span>Server Time : {state?.server_time?.replaceAll("-", ".") ?? "-"}</span><span className={state && state.age > 30 ? "neg" : ""}>Updated : {state ? `${state.age}s ago` : "-"}</span>{error && <span className="neg">{error}</span>}
-        {data.online !== null && <span className="online"><Users /> Online Users : {data.online}</span>}
+        {data.online !== null && <span className="online"><Eye /> Space Viewing : {data.online}</span>}
         <button type="button" className="logout" onClick={logout}><Logout /> Logout</button>
         {canFull && <button type="button" className="fullbtn" onClick={toggleFull} aria-label={full ? "Exit full screen" : "Full screen"} title={full ? "Exit full screen" : "Full screen"}>{full ? <Shrink /> : <Expand />}</button>}</footer>
       {hint && <button type="button" className="fullhint" onClick={() => setHint(false)}>เบราว์เซอร์นี้เปิดเต็มจอจากปุ่มไม่ได้ บน iPhone ให้กด Share แล้วเลือก Add to Home Screen จากนั้นเปิดจากไอคอนบนหน้าจอหลัก</button>}

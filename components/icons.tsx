@@ -4,7 +4,7 @@ const S = ({ size = 20, children }: { size?: number; children: React.ReactNode }
 );
 
 export const Logo = () => <S size={34}><path d="M4 20h16" /><path d="M6 17v-3M11 17v-6M16 17v-9" strokeWidth="3" /><path d="M4 11l6-5 3 3 7-6M16 3h4v4" /></S>;
-export const Users = () => <S size={14}><circle cx="9" cy="8" r="3.5" /><path d="M3 20a6 6 0 0 1 12 0M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.6a6 6 0 0 1 3 5.4" /></S>;
+export const Eye = () => <S size={15}><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></S>;
 export const Expand = () => <S size={15}><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></S>;
 export const Shrink = () => <S size={15}><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /></S>;
 export const Logout = () => <S size={14}><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9" /></S>;
