@@ -199,7 +199,8 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
             <rect className="glow" x={-NODE_W / 2} y={-NODE_H / 2} width={NODE_W} height={NODE_H} rx={NODE_H / 2} />
             <rect x={-NODE_W / 2} y={-NODE_H / 2} width={NODE_W} height={NODE_H} rx={NODE_H / 2} />
             <rect className="tube" x={-NODE_W / 2} y={-NODE_H / 2} width={NODE_W} height={NODE_H} rx={NODE_H / 2} />
-            <text className="code" y="4" textAnchor="middle">{modelCode(k + 1)}</text>
+            <g className="robot"><path d="M0 -17v3M-9 -9h-2v5h2M9 -9h2v5h-2M-4 -3h8" /><rect x="-9" y="-14" width="18" height="14" rx="4" /><circle className="eye" cx="-4" cy="-8" r="1.7" /><circle className="eye" cx="4" cy="-8" r="1.7" /></g>
+            <text className="code" y="13" textAnchor="middle">{modelCode(k + 1)}</text>
           </g>
         );
       })}
