@@ -10,8 +10,8 @@ const SWAY = 1.45, SWAY_RATE = .27;
 // each model is joined to the core by a curved fibre; light waves run along it into the core
 // the waves are small comets: a bright head with a tail that thins and fades behind it
 const BEND = .26, PACKET_RATE = .5, TRAIL = .2, TAIL = [1, .55, .25];
-// a wire brain built in 3D: two hemispheres with wavy folds, spinning on its upright axis
-const BRAIN_SPIN = .9, BRAIN_TILT = .38, BRAIN_Y = BALL.y - 16, BRAIN_K = 1.45;
+// a wire brain built in 3D, shaped like a real one (cerebrum, cerebellum, stem), spinning on its upright axis
+const BRAIN_SPIN = .8, BRAIN_TILT = .2, BRAIN_Y = BALL.y - 12, BRAIN_K = .85;
 const PAD_Y = 772, RISE = [-44, -26, -9, 12, 30, 47], NODE_W = 50, NODE_H = 19, NODE_Y = 3;
 // light shooting up from the bottom edge into the projector
 const EDGE_Y = H - 5;
@@ -29,18 +29,29 @@ const SPOTS: V[] = MODEL_NAMES.map((_, k, all) => {
 });
 // turns a point on the ball, then tips the ball toward the viewer
 const BRAIN3D: V[][] = (() => {
-  const out: V[][] = [];
+  const out: V[][] = [], K = BRAIN_K, line = (n: number, f: (u: number) => V) => out.push(Array.from({ length: n + 1 }, (_, i) => f(i / n)));
+  // cerebrum: each hemisphere is a stretched dome; z runs front (+) to back (-), the temporal lobe hangs low at the front
   for (const h of [-1, 1]) {
-    // th runs round the hemisphere from the top middle to the bottom, s from the front to the back
     const at = (th: number, s: number, wob: number): V => {
-      const f = Math.pow(Math.sin(s), .55) * (1 + wob), y = 16 * Math.cos(th) * f;
-      return [h * (1.6 + 11 * Math.sin(th) * f) * BRAIN_K, (y < 0 ? y * .7 : y) * BRAIN_K, 24 * Math.cos(s) * BRAIN_K];
+      const f = Math.pow(Math.sin(s), .5) * (1 + wob), z = 30 * Math.cos(s), c = Math.cos(th) * f;
+      const top = 22 - Math.max(0, z) * .16, low = 9 + 9 * Math.exp(-(((z - 7) / 11) ** 2));
+      return [h * (1.5 + 13 * Math.sin(th) * f) * K, ((c > 0 ? c * top : c * low) + 3) * K, z * K];
     };
-    for (const th of [.22, .65, 1.1, 1.55, 2, 2.45])
-      out.push(Array.from({ length: 31 }, (_, i) => { const s = .08 + (i / 30) * (Math.PI - .16); return at(th, s, .07 * Math.sin(s * 9 + th * 5 + h)); }));
-    for (const s of [.55, 1.05, 1.57, 2.1, 2.6])
-      out.push(Array.from({ length: 21 }, (_, i) => { const th = .04 + (i / 20) * 2.86; return at(th, s, .07 * Math.sin(th * 8 + s * 4)); }));
+    // winding grooves run front to back, crossing folds run over the top, so the surface looks folded
+    for (const t0 of [.18, .55, .92, 1.3, 1.68, 2.06, 2.45])
+      line(56, (u) => { const s = .1 + u * (Math.PI - .2); return at(t0 + .13 * Math.sin(s * 10 + t0 * 7 + h) + .06 * Math.sin(s * 23 + t0 * 3), s, .045 * Math.sin(s * 17 + t0 * 5)); });
+    for (const s0 of [.42, .8, 1.18, 1.56, 1.94, 2.32, 2.7])
+      line(30, (u) => { const th = .05 + u * 2.85; return at(th, s0 + .09 * Math.sin(th * 9 + s0 * 5 + h), .045 * Math.sin(th * 13 + s0 * 3)); });
+    // cerebellum tucked under the back, with flat stacked folds
+    for (const v of [-.75, -.45, -.15, .15, .45, .75]) {
+      const r = Math.sqrt(1 - v * v);
+      line(26, (u) => { const t = u * Math.PI * 2, w = 1 + .04 * Math.sin(t * 12); return [(h * 6.5 + 7 * r * Math.cos(t) * w) * K, (-12 + v * 7) * K, (-20 + 10 * r * Math.sin(t) * w) * K]; });
+    }
   }
+  // brain stem dropping down and a little back
+  const stem = (u: number, a: number): V => { const r = 4.6 - u * 1.4; return [r * Math.cos(a) * K, (-6 - u * 26) * K, (-7 - u * 6 + r * Math.sin(a)) * K]; };
+  for (const a of [0, 1.57, 3.14, 4.71]) line(10, (u) => stem(u, a));
+  for (const u0 of [.2, .55, .9]) line(16, (u) => stem(u0, u * Math.PI * 2));
   return out;
 })();
 const turn = ([x, y, z]: V, angle: number, tilt: number): V => {
@@ -161,6 +172,7 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
   return (
     <svg className={`net ${space.variable}`} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="TrendX neural core: 39 models on a turning ball" onPointerMove={point} onPointerLeave={(e) => { hover.current = -1; rest(e); }}>
       <defs>
+        <radialGradient id="brainGlow"><stop offset="0" stopColor="#39ff6a" stopOpacity=".35" /><stop offset=".55" stopColor="#39ff6a" stopOpacity=".1" /><stop offset="1" stopColor="#39ff6a" stopOpacity="0" /></radialGradient>
         <radialGradient id="coreGlow">
           <stop offset="0" stopColor="#39ff6a" stopOpacity=".3" />
           <stop offset=".5" stopColor="#00c853" stopOpacity=".12" />
@@ -237,6 +249,7 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
         <circle className="halo" cx={BALL.x} cy={BALL.y} r={CORE_R + 8} />
         <circle className="orbit" cx={BALL.x} cy={BALL.y} r={CORE_R + 13} />
         <circle className="ringc" cx={BALL.x} cy={BALL.y} r={CORE_R} />
+        <circle className="brainglow" cx={BALL.x} cy={BRAIN_Y - 4} r="40" fill="url(#brainGlow)" />
         <path ref={brainBack} className="brain3d back" />
         <path ref={brainFront} className="brain3d" />
         <text x={BALL.x} y={BALL.y + 32} textAnchor="middle">AI CORE</text>

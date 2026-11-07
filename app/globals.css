@@ -355,8 +355,9 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .comet { fill: none; stroke: var(--neon); stroke-linecap: round; stroke-linejoin: round; }
 .comet.c0 { stroke-width: .45; opacity: .18; } .comet.c1 { stroke-width: .7; opacity: .35; } .comet.c2 { stroke: #9dffbe; stroke-width: .95; opacity: .6; }
 .comet.head { stroke: #f2fff6; stroke-width: 1.9; filter: drop-shadow(0 0 2.5px var(--neon)); }
-.core .brain3d { fill: none; stroke: #7dffa6; stroke-width: 1.1; stroke-linecap: round; filter: drop-shadow(0 0 2.5px var(--neon)); }
-.core .brain3d.back { stroke: var(--neon); stroke-width: .7; opacity: .28; filter: none; }
+.core .brain3d { fill: none; stroke: #a8ffc2; stroke-width: .9; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 2px #39ff6a) drop-shadow(0 0 5px rgba(57, 255, 106, .55)); }
+.core .brain3d.back { stroke: var(--neon); stroke-width: .6; opacity: .3; filter: none; }
+.core .brainglow { animation: corePulse 3.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 .net .mnode { cursor: pointer; } .mnode rect { fill: rgba(3, 30, 20, .78); } .mnode.stop > rect { fill: rgba(80, 12, 24, .82); }
 .mnode.boost > rect, .mnode.stop > rect { animation: none; }
 .mnode .code { font-size: 11px; }
