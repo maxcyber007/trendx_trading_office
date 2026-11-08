@@ -232,7 +232,7 @@ function ChartBot({ market, positions, floating, money }: { market: Market | nul
   return (
     // eye and mouth colour follow the 3-month H1 range: green WIDE, yellow WATCH, red NARROW (green until the bridge sends it)
     <div className={`chatbot ${market?.range_3m ? (market.range_3m >= RANGE_WIDE ? "tone-wide" : market.range_3m >= RANGE_NARROW ? "tone-watch" : "tone-narrow") : ""}`} aria-live="polite">
-      {text && <p key={shown} className={`bubble ${prompt.className}`}><small><i className="botdot" aria-hidden="true" />TRENDX AI ASSISTANT</small>{text}</p>}
+      {text && <p key={shown} className={`bubble ${prompt.className}`}><small><i className="botdot" aria-hidden="true" />TRENDX AI AGENT</small>{text}</p>}
       <svg className="bot" viewBox="0 0 120 142" width="96" height="114" aria-hidden="true">
         <defs>
           <linearGradient id="botShell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffffff" /><stop offset=".55" stopColor="#e7ebf1" /><stop offset="1" stopColor="#b9c1cd" /></linearGradient>
