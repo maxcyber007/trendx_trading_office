@@ -439,7 +439,8 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .dev .acctinfo small, .dev .acctinfo b, .dev .acctinfo span { color: var(--text); font-size: 12px; font-weight: 400; background: none; animation: none; -webkit-text-fill-color: currentColor; }
 
 /* robot reporter in the bottom-right of the centre column */
-.chatbot { position: absolute; right: 14px; bottom: 12px; z-index: 3; display: flex; align-items: flex-end; gap: 6px; pointer-events: none; }
+.chatbot { position: absolute; right: 14px; bottom: -3px;   /* the shadow sits on the column's bottom edge, just above the status bar */
+  z-index: 3; display: flex; align-items: flex-end; gap: 6px; pointer-events: none; }
 .chatbot .bot { flex: none; overflow: visible; }
 .chatbot .bot .body { animation: botFloat 3.2s ease-in-out infinite; }
 .chatbot .bot .shadow { transform-box: fill-box; transform-origin: center; animation: botShadow 3.2s ease-in-out infinite; }
