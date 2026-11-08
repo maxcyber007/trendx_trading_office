@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { Prompt } from "next/font/google";
 import { MODEL_NAMES, modelCode } from "@/lib/models";
 import NeuralCore from "./NeuralCore";
 import { AiChip, Bars, Calendar as CalIcon, ChartSmall, ChartUp, Code, ExtLink, Clock, Coins, Expand, Eye, Layers, Logo, Logout, Neural, Person, Power, Pulse, Shield, Shrink, Signal, Trophy } from "./icons";
@@ -192,6 +193,9 @@ function Meter({ label, value, pct, color = "" }: { label: string; value: string
 
 const BEAT = "l3-3 3 3h4l2 4 3-13 3 13 2-4h5l4-3 4 3H";
 
+// the robot's speech bubble uses Prompt (Thai and Latin)
+const prompt = Prompt({ subsets: ["thai", "latin"], weight: ["400", "500"] });
+
 // robot reporter: every minute it says one line about the chart, built from the dashboard's own data (no AI call)
 const BOT_EVERY = 60_000, BOT_SHOW = 9_000, BOT_FIRST = 2_500;
 function ChartBot({ market, positions, floating, money }: { market: Market | null | undefined; positions: Position[]; floating: number; money: Money }) {
@@ -227,7 +231,7 @@ function ChartBot({ market, positions, floating, money }: { market: Market | nul
   const text = shown >= 0 ? lines[shown % lines.length] : "";
   return (
     <div className="chatbot" aria-live="polite">
-      {text && <p key={shown} className="bubble"><small>TRENDX BOT · ทุก 1 นาที</small>{text}</p>}
+      {text && <p key={shown} className={`bubble ${prompt.className}`}><small>TRENDX BOT</small>{text}</p>}
       <svg className="bot" viewBox="0 0 120 142" width="96" height="114" aria-hidden="true">
         <defs>
           <linearGradient id="botShell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffffff" /><stop offset=".55" stopColor="#e7ebf1" /><stop offset="1" stopColor="#b9c1cd" /></linearGradient>
