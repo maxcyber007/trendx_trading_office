@@ -426,14 +426,14 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .dev > div { min-width: 0; } .dev b { white-space: nowrap; }
 .dev { flex-wrap: wrap; row-gap: 6px; }
 .devlinks { flex-basis: 100%; display: flex; gap: 16px; padding-left: 50px; }   /* a row under the name, lined up with the text */
-.devlink { display: inline-flex; align-items: center; gap: 4px; padding: 2px 0; border: 0; color: var(--neon); font-size: 12px; font-weight: 700; text-decoration: none; background: none; transition: background .2s, box-shadow .2s; }
+.devlink { display: inline-flex; align-items: center; gap: 4px; padding: 2px 0; border: 0; color: var(--neon); font-size: 12px; font-weight: 400; text-decoration: none; background: none; transition: background .2s, box-shadow .2s; }
 .devlink .ico:last-child { opacity: .7; }
 .devlink[href]:hover, .devlink[href]:focus-visible { filter: drop-shadow(0 0 5px var(--neon)); outline: none; color: var(--neon); }
 .devlink[aria-disabled="true"] { cursor: default; }
 
 /* account details on the card that used to say DEVELOPED BY */
 .dev .acctinfo b, .dev .acctinfo span, .dev .acctinfo small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* the labels bold green, the values plain grey */
-.dev .acctinfo em { font-style: normal; font-weight: 700; color: var(--neon); -webkit-text-fill-color: currentColor; }
-/* all three lines plain grey, same size, no bold or light sweep */
-.dev .acctinfo small, .dev .acctinfo b, .dev .acctinfo span { color: var(--dim); font-size: 12px; font-weight: 400; background: none; animation: none; -webkit-text-fill-color: currentColor; }
+/* the labels plain green, the values plain white */
+.dev .acctinfo em { font-style: normal; font-weight: 400; color: var(--neon); -webkit-text-fill-color: currentColor; }
+/* all three lines plain, same size, no bold or light sweep */
+.dev .acctinfo small, .dev .acctinfo b, .dev .acctinfo span { color: var(--text); font-size: 12px; font-weight: 400; background: none; animation: none; -webkit-text-fill-color: currentColor; }
