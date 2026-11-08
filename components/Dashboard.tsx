@@ -243,7 +243,15 @@ export default function Dashboard() {
 
   if (!data) return (
     <main className="empty boot" role="status">
-      <span className="bootcore"><i /><i /><i /><AiChip size={23} /></span>
+      <span className="bootcore"><i /><i /><i />
+        {/* the same robot as the neural-core nodes, its eyes lighting up while the dashboard loads */}
+        <svg className="bootbot" viewBox="-13 -22 26 25" width="34" height="33" aria-hidden="true">
+          <circle className="tip" cy="-19" r="1.8" />
+          <path d="M0 -17v3M-9 -9h-2v5h2M9 -9h2v5h-2M-4 -3h8" /><rect x="-9" y="-14" width="18" height="14" rx="4" />
+          <circle className="glow" cx="-4" cy="-8" r="4.5" /><circle className="glow" cx="4" cy="-8" r="4.5" />
+          <circle className="eye" cx="-4" cy="-8" r="1.7" /><circle className="eye" cx="4" cy="-8" r="1.7" />
+        </svg>
+      </span>
       <b>LOADING<em><u>.</u><u>.</u><u>.</u></em></b>
       <span className="bootbar"><i /></span>
       {error && <p className="neg">{error}</p>}
