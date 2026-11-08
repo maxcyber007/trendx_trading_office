@@ -197,7 +197,7 @@ const BEAT = "l3-3 3 3h4l2 4 3-13 3 13 2-4h5l4-3 4 3H";
 const prompt = Prompt({ subsets: ["thai", "latin"], weight: ["400", "500"] });
 
 // robot reporter: every minute it says one line about the chart, built from the dashboard's own data (no AI call)
-const BOT_EVERY = 60_000, BOT_SHOW = 9_000, BOT_FIRST = 2_500;
+const BOT_EVERY = 60_000, BOT_SHOW = 9_000, BOT_FIRST = 2_500, BOT_TYPE_MS = 35;
 function ChartBot({ market, positions, floating, money }: { market: Market | null | undefined; positions: Position[]; floating: number; money: Money }) {
   const lines = useMemo(() => {
     const out: string[] = [];
@@ -216,7 +216,14 @@ function ChartBot({ market, positions, floating, money }: { market: Market | nul
     }
     const now = Date.now() / 1000, next = market?.news?.find((n) => n.t > now);
     const hhmm = (t: number) => new Date(t * 1000).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
-    out.push(next ? `ข่าวถัดไป ${hhmm(next.t)} ${next.name} (${next.cur})` : "วันนี้ไม่มีข่าวแรงที่เหลือแล้ว");
+    // today's important news: a summary, then each event (its result once released), then the next one due
+    const news = market?.news ?? [];
+    out.push(news.length ? `ข่าวสำคัญวันนี้ ${news.length} รายการ · ${news.map((n) => hhmm(n.t)).join(", ")}` : "วันนี้ไม่มีข่าวเศรษฐกิจสำคัญ ตลาดเคลื่อนไหวตามปัจจัยทางเทคนิค");
+    for (const n of news) {
+      if (n.act) out.push(`ผลข่าว ${n.name} (${n.cur}) ออกแล้ว ${n.act}${n.fc ? ` เทียบคาด ${n.fc}` : ""}`);
+      else out.push(`${n.t > now ? "รอข่าว" : "ข่าว"} ${hhmm(n.t)} ${n.name} (${n.cur})${n.fc ? ` · คาดการณ์ ${n.fc}` : ""}`);
+    }
+    if (news.length) out.push(next ? `ข่าวถัดไป ${hhmm(next.t)} ${next.name} ระวังความผันผวนช่วงประกาศ` : "ข่าวสำคัญของวันนี้ประกาศครบแล้ว");
     const buys = positions.filter((p) => p.type === 0).length, sells = positions.length - buys;
     out.push(positions.length ? `ถือ ${positions.length} ไม้ · BUY ${buys} SELL ${sells} · กำไรลอย ${money(floating, true)}` : "ตอนนี้ไม่มีไม้เปิดอยู่ รอสัญญาณ");
     return out;
@@ -229,10 +236,20 @@ function ChartBot({ market, positions, floating, money }: { market: Market | nul
     return () => { clearTimeout(first); clearInterval(every); clearTimeout(hide); };
   }, [lines.length]);
   const text = shown >= 0 ? lines[shown % lines.length] : "";
+  // typewriter: the line appears one character at a time each time the bubble opens
+  const chars = useMemo(() => Array.from(text), [text]);
+  const [typed, setTyped] = useState(0);
+  useEffect(() => {
+    setTyped(0);
+    if (shown < 0) return;
+    const t = window.setInterval(() => setTyped((n) => { if (n >= 400) { clearInterval(t); return n; } return n + 1; }), BOT_TYPE_MS);
+    return () => clearInterval(t);
+  }, [shown]);
+  const done = typed >= chars.length;
   return (
     // eye and mouth colour follow the 3-month H1 range: green WIDE, yellow WATCH, red NARROW (green until the bridge sends it)
     <div className={`chatbot ${market?.range_3m ? (market.range_3m >= RANGE_WIDE ? "tone-wide" : market.range_3m >= RANGE_NARROW ? "tone-watch" : "tone-narrow") : ""}`} aria-live="polite">
-      {text && <p key={shown} className={`bubble ${prompt.className}`}><small><i className="botdot" aria-hidden="true" />TRENDX AI AGENT</small>{text}</p>}
+      {text && <p key={shown} className={`bubble ${prompt.className}`}><small><i className="botdot" aria-hidden="true" />TRENDX AI AGENT</small><span className="sr-only">{text}</span><span className="tw" aria-hidden="true"><span className="ghost">{text}</span><span>{chars.slice(0, typed).join("")}{!done && <i className="caret" />}</span></span></p>}
       <svg className="bot" viewBox="0 0 120 142" width="96" height="114" aria-hidden="true">
         <defs>
           <linearGradient id="botShell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffffff" /><stop offset=".55" stopColor="#e7ebf1" /><stop offset="1" stopColor="#b9c1cd" /></linearGradient>
