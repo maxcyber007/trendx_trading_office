@@ -437,3 +437,30 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .dev .acctinfo em { font-style: normal; font-weight: 400; color: var(--neon); -webkit-text-fill-color: currentColor; }
 /* all three lines plain, same size, no bold or light sweep */
 .dev .acctinfo small, .dev .acctinfo b, .dev .acctinfo span { color: var(--text); font-size: 12px; font-weight: 400; background: none; animation: none; -webkit-text-fill-color: currentColor; }
+
+/* robot reporter in the bottom-right of the centre column */
+.chatbot { position: absolute; right: 14px; bottom: 12px; z-index: 3; display: flex; align-items: flex-end; gap: 6px; pointer-events: none; }
+.chatbot .bot { flex: none; overflow: visible; }
+.chatbot .bot .body { animation: botFloat 3.2s ease-in-out infinite; }
+.chatbot .bot .shadow { transform-box: fill-box; transform-origin: center; animation: botShadow 3.2s ease-in-out infinite; }
+.chatbot .bot .arm { transform-box: fill-box; transform-origin: 50% 12%; }
+.chatbot .bot .arm.l { animation: armL 3.2s ease-in-out infinite; } .chatbot .bot .arm.r { animation: armR 3.2s ease-in-out infinite; }
+.chatbot .bot .seam { fill: none; stroke: #a9b2bf; stroke-width: 1.2; stroke-linejoin: round; }
+.chatbot .bot .sheen { fill: #ffffff; opacity: .07; }
+.chatbot .bot .eye { fill: none; stroke: #5ff3ff; stroke-width: 5; stroke-linecap: round; filter: drop-shadow(0 0 3px #35e0ff); }
+.chatbot .bot .mouth { fill: #5ff3ff; filter: drop-shadow(0 0 3px #35e0ff); transform-box: fill-box; transform-origin: center top; }
+.chatbot .bot .face { transform-box: fill-box; transform-origin: center; animation: botBlink 4.6s ease-in-out infinite; }
+.chatbot:has(.bubble) .bot .mouth { animation: botTalk .32s ease-in-out infinite alternate; }
+.chatbot:has(.bubble) .bot .arm.r { animation: botWave .6s ease-in-out 3 alternate; }
+@keyframes botFloat { 50% { transform: translateY(-6px); } }
+@keyframes botShadow { 50% { transform: scale(.8); opacity: .6; } }
+@keyframes armL { 50% { transform: rotate(5deg); } }
+@keyframes armR { 50% { transform: rotate(-5deg); } }
+@keyframes botWave { from { transform: rotate(-6deg); } to { transform: rotate(-38deg); } }
+@keyframes botBlink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+@keyframes botTalk { from { transform: scaleY(.35); } to { transform: scaleY(1.15); } }
+.chatbot .bubble { position: relative; max-width: 300px; margin: 0 0 66px; padding: 8px 12px; border: 1px solid var(--neon2); border-radius: 10px 10px 2px 10px; background: rgba(4, 20, 12, .94); color: var(--text); font-size: 13px; line-height: 1.45; box-shadow: 0 0 16px rgba(57, 255, 106, .2); animation: bubbleIn .35s ease-out, bubbleOut .5s ease-in 8.5s forwards; }
+.chatbot .bubble small { display: block; color: var(--neon); font-size: 10px; letter-spacing: .08em; margin-bottom: 2px; }
+.chatbot .bubble::after { content: ""; position: absolute; right: -6px; bottom: 6px; width: 10px; height: 10px; background: inherit; border-right: 1px solid var(--neon2); border-top: 1px solid var(--neon2); transform: rotate(45deg); }
+@keyframes bubbleIn { from { opacity: 0; transform: translateX(12px) scale(.96); } }
+@keyframes bubbleOut { to { opacity: 0; transform: translateX(8px); } }

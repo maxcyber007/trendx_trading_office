@@ -192,6 +192,70 @@ function Meter({ label, value, pct, color = "" }: { label: string; value: string
 
 const BEAT = "l3-3 3 3h4l2 4 3-13 3 13 2-4h5l4-3 4 3H";
 
+// robot reporter: every minute it says one line about the chart, built from the dashboard's own data (no AI call)
+const BOT_EVERY = 60_000, BOT_SHOW = 9_000, BOT_FIRST = 2_500;
+function ChartBot({ market, positions, floating, money }: { market: Market | null | undefined; positions: Position[]; floating: number; money: Money }) {
+  const lines = useMemo(() => {
+    const out: string[] = [];
+    const c = market?.candles ?? [];
+    if (c.length) {
+      const last = c[c.length - 1], bar = ((last[4] - last[1]) / last[1]) * 100;
+      out.push(`${market!.symbol} ${last[4].toFixed(2)} · แท่ง H1 นี้ ${bar >= 0 ? "+" : ""}${bar.toFixed(2)}%`);
+      if (c.length > 24) {
+        const ago = c[c.length - 25][4], diff = last[4] - ago, pct = (diff / ago) * 100;
+        out.push(`24 ชั่วโมงล่าสุด ${diff >= 0 ? "+" : "-"}$${Math.abs(diff).toFixed(2)} (${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%) ${Math.abs(pct) < 0.3 ? "ราคาทรงตัว" : diff > 0 ? "แนวโน้มขึ้น" : "แนวโน้มลง"}`);
+      }
+    }
+    if (market?.range_3m) {
+      const r = market.range_3m;
+      out.push(`H1 RANGE 3M $${r.toFixed(2)} · ${r >= RANGE_WIDE ? "WIDE ตลาดวิ่งดี เข้ากับระบบ" : r >= RANGE_NARROW ? "WATCH ตลาดเริ่มแคบ" : "NARROW ตลาดแคบ ระวัง"}`);
+    }
+    const now = Date.now() / 1000, next = market?.news?.find((n) => n.t > now);
+    const hhmm = (t: number) => new Date(t * 1000).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
+    out.push(next ? `ข่าวถัดไป ${hhmm(next.t)} ${next.name} (${next.cur})` : "วันนี้ไม่มีข่าวแรงที่เหลือแล้ว");
+    const buys = positions.filter((p) => p.type === 0).length, sells = positions.length - buys;
+    out.push(positions.length ? `ถือ ${positions.length} ไม้ · BUY ${buys} SELL ${sells} · กำไรลอย ${money(floating, true)}` : "ตอนนี้ไม่มีไม้เปิดอยู่ รอสัญญาณ");
+    return out;
+  }, [market, positions, floating, money]);
+  const [shown, setShown] = useState(-1);   // index of the line on screen, -1 = bubble hidden
+  useEffect(() => {
+    let n = 0, hide = 0;
+    const say = () => { setShown(n++ % Math.max(1, lines.length)); clearTimeout(hide); hide = window.setTimeout(() => setShown(-1), BOT_SHOW); };
+    const first = window.setTimeout(say, BOT_FIRST), every = window.setInterval(say, BOT_EVERY);
+    return () => { clearTimeout(first); clearInterval(every); clearTimeout(hide); };
+  }, [lines.length]);
+  const text = shown >= 0 ? lines[shown % lines.length] : "";
+  return (
+    <div className="chatbot" aria-live="polite">
+      {text && <p key={shown} className="bubble"><small>TRENDX BOT · ทุก 1 นาที</small>{text}</p>}
+      <svg className="bot" viewBox="0 0 120 142" width="96" height="114" aria-hidden="true">
+        <defs>
+          <linearGradient id="botShell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffffff" /><stop offset=".55" stopColor="#e7ebf1" /><stop offset="1" stopColor="#b9c1cd" /></linearGradient>
+          <linearGradient id="botVisor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#24364a" /><stop offset="1" stopColor="#0b141f" /></linearGradient>
+          <radialGradient id="botShade" cx=".5" cy=".5" r=".5"><stop offset="0" stopColor="#39ff6a" stopOpacity=".35" /><stop offset="1" stopColor="#39ff6a" stopOpacity="0" /></radialGradient>
+        </defs>
+        <ellipse className="shadow" cx="60" cy="134" rx="28" ry="5" fill="url(#botShade)" />
+        <g className="body">
+          <ellipse className="arm l" cx="23" cy="94" rx="8.5" ry="17" fill="url(#botShell)" />
+          <ellipse className="arm r" cx="97" cy="94" rx="8.5" ry="17" fill="url(#botShell)" />
+          <path d="M31 92c0-16 13-24 29-24s29 8 29 24c0 19-12 32-29 32S31 111 31 92Z" fill="url(#botShell)" />
+          <path className="seam" d="M34 100h20l3 3h6l3-3h20" />
+          <rect x="45" y="12" width="30" height="12" rx="6" fill="url(#botShell)" />
+          <rect x="9" y="38" width="11" height="24" rx="5.5" fill="url(#botShell)" />
+          <rect x="100" y="38" width="11" height="24" rx="5.5" fill="url(#botShell)" />
+          <rect x="16" y="20" width="88" height="60" rx="26" fill="url(#botShell)" />
+          <rect x="25" y="29" width="70" height="42" rx="16" fill="url(#botVisor)" />
+          <path className="sheen" d="M33 33h22l-10 34H31Z" />
+          <g className="face">
+            <path className="eye" d="M41 53q7-9 14 0" /><path className="eye" d="M65 53q7-9 14 0" />
+            <path className="mouth" d="M55 59q5 7 10 0Z" />
+          </g>
+        </g>
+      </svg>
+    </div>
+  );
+}
+
 function Monitor({ sys, alive }: { sys?: Sys; alive: boolean }) {
   return (
     <section className="card">
@@ -336,6 +400,7 @@ export default function Dashboard() {
 
         <div className="center">
           <NeuralCore states={states} side={side} />
+          <ChartBot market={state?.market} positions={positions} floating={floating} money={money} />
         </div>
 
         <div className="right">
