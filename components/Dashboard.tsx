@@ -197,7 +197,7 @@ const BEAT = "l3-3 3 3h4l2 4 3-13 3 13 2-4h5l4-3 4 3H";
 const prompt = Prompt({ subsets: ["thai", "latin"], weight: ["400", "500"] });
 
 // robot reporter: every minute it says one line about the chart, built from the dashboard's own data (no AI call)
-const BOT_EVERY = 60_000, BOT_SHOW = 9_000, BOT_FIRST = 2_500, BOT_TYPE_MS = 35, BOT_ERASE_MS = 18;
+const BOT_EVERY = 60_000, BOT_SHOW = 9_000, BOT_FIRST = 2_500, BOT_TYPE_MS = 35, BOT_ERASE_MS = 18, BOT_FADE_MS = 600;
 function ChartBot({ market, positions, floating, money }: { market: Market | null | undefined; positions: Position[]; floating: number; money: Money }) {
   const lines = useMemo(() => {
     const out: string[] = [];
@@ -251,12 +251,18 @@ function ChartBot({ market, positions, floating, money }: { market: Market | nul
     return () => clearInterval(t);
   }, [shown, erasing]);
   useEffect(() => { setTyped(0); }, [shown]);
-  useEffect(() => { if (erasing && typed === 0) setShown(-1); }, [erasing, typed]);
+  // once the line is erased the empty bubble fades out, then it is removed
+  const closing = erasing && typed === 0 && shown >= 0;
+  useEffect(() => {
+    if (!closing) return;
+    const t = window.setTimeout(() => setShown(-1), BOT_FADE_MS);
+    return () => clearTimeout(t);
+  }, [closing]);
   const done = !erasing && typed >= chars.length;
   return (
     // eye and mouth colour follow the 3-month H1 range: green WIDE, yellow WATCH, red NARROW (green until the bridge sends it)
     <div className={`chatbot ${market?.range_3m ? (market.range_3m >= RANGE_WIDE ? "tone-wide" : market.range_3m >= RANGE_NARROW ? "tone-watch" : "tone-narrow") : ""}`} aria-live="polite">
-      {text && <p key={shown} className={`bubble ${prompt.className}`}><small><i className="botdot" aria-hidden="true" />TRENDX AI AGENT</small><span className="sr-only">{text}</span><span className="tw" aria-hidden="true"><span className="ghost">{text}</span><span>{chars.slice(0, typed).join("")}{!done && <i className="caret" />}</span></span></p>}
+      {text && <p key={shown} className={`bubble ${prompt.className}${closing ? " closing" : ""}`}><small><i className="botdot" aria-hidden="true" />TRENDX AI AGENT</small><span className="sr-only">{text}</span><span className="tw" aria-hidden="true"><span className="ghost">{text}</span><span>{chars.slice(0, typed).join("")}{!done && <i className="caret" />}</span></span></p>}
       <svg className="bot" viewBox="0 0 120 142" width="96" height="114" aria-hidden="true">
         <defs>
           <linearGradient id="botShell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffffff" /><stop offset=".55" stopColor="#e7ebf1" /><stop offset="1" stopColor="#b9c1cd" /></linearGradient>
