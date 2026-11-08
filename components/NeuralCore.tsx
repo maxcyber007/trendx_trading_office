@@ -4,7 +4,7 @@ import { FAMILIES, MODEL_FAMILIES, MODEL_NAMES, modelCode } from "@/lib/models";
 
 const space = Audiowide({ subsets: ["latin"], weight: "400", variable: "--font-title" });
 
-const W = 910, H = 860, IN_W = 172, BALL = { x: 468, y: 418, r: 272 }, CORE_R = 56, TILT = .34, SPEED = .22;
+const W = 910, H = 860, IN_W = 172, BALL = { x: 468, y: 452, r: 292 }, CORE_R = 56, TILT = .34, SPEED = .22;
 // the ball also nods up and down, so all 39 models get their turn at the front centre
 const SWAY = 1.45, SWAY_RATE = .27;
 // each model is joined to the core by a curved fibre; light waves run along it into the core
@@ -14,9 +14,7 @@ const EYE_CYCLE = 7;
 const BEND = .26, PACKET_RATE = .5, TRAIL = .2, TAIL = [1, .55, .25];
 // a wire brain built in 3D, shaped like a real one (cerebrum, cerebellum, stem), spinning on its upright axis
 const BRAIN_SPIN = .8, BRAIN_TILT = .2, BRAIN_Y = BALL.y - 12, BRAIN_K = .85;
-const PAD_Y = 772, RISE = [-44, -26, -9, 12, 30, 47], NODE_W = 50, NODE_H = 19, NODE_Y = 3;
-// light shooting up from the bottom edge into the projector
-const EDGE_Y = H - 5;
+const NODE_W = 50, NODE_H = 19, NODE_Y = 3;
 // LONG and SHORT sit evenly above and below the middle of the ball
 const OUT_X = 777, OUT_W = 128, OUT_H = 42, LONG_Y = BALL.y - 70, SHORT_Y = BALL.y + 70;
 // the gap under the title matches the gap under the last input
@@ -181,17 +179,6 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
           <stop offset=".5" stopColor="#00c853" stopOpacity=".12" />
           <stop offset="1" stopColor="#00c853" stopOpacity="0" />
         </radialGradient>
-        <linearGradient id="edgeGlow">
-          <stop offset="0" stopColor="#00c853" stopOpacity="0" />
-          <stop offset=".3" stopColor="#39ff6a" stopOpacity=".8" />
-          <stop offset={BALL.x / W} stopColor="#eafff0" />
-          <stop offset=".72" stopColor="#39ff6a" stopOpacity=".8" />
-          <stop offset="1" stopColor="#00c853" stopOpacity="0" />
-        </linearGradient>
-        <linearGradient id="upGlow" x1="0" y1="1" x2="0" y2="0">
-          <stop offset="0" stopColor="#39ff6a" stopOpacity=".38" />
-          <stop offset="1" stopColor="#39ff6a" stopOpacity=".08" />
-        </linearGradient>
         <linearGradient id="titleGlow" gradientUnits="userSpaceOnUse" x1="-260" y1="0" x2="60" y2="0">
           <stop offset="0" stopColor="#39ff6a" stopOpacity=".75" />
           <stop offset=".42" stopColor="#39ff6a" stopOpacity=".75" />
@@ -206,25 +193,8 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
           <stop offset=".5" stopColor="#eafff0" />
           <stop offset="1" stopColor="#39ff6a" stopOpacity="0" />
         </linearGradient>
-        <linearGradient id="holoBeam" x1="0" y1="1" x2="0" y2="0">
-          <stop offset="0" stopColor="#39ff6a" stopOpacity=".4" />
-          <stop offset=".65" stopColor="#35e0ff" stopOpacity=".09" />
-          <stop offset="1" stopColor="#35e0ff" stopOpacity="0" />
-        </linearGradient>
       </defs>
       <circle className="coreglow" cx={BALL.x} cy={BALL.y} r={BALL.r + 40} fill="url(#coreGlow)" />
-      <g className="uplight">
-        <polygon className="fan" fill="url(#upGlow)" points={`${BALL.x - 250},${EDGE_Y} ${BALL.x + 250},${EDGE_Y} ${BALL.x + 84},${PAD_Y} ${BALL.x - 84},${PAD_Y}`} />
-        <rect className="edge" y={EDGE_Y} width={W} height="3" fill="url(#edgeGlow)" />
-        {[0, 1, 2].map((i) => <ellipse key={i} className={`wave w${i}`} cx={BALL.x} cy={EDGE_Y} rx="62" ry="10" />)}
-      </g>
-      <g className="projector">
-        <polygon fill="url(#holoBeam)" points={`${BALL.x - 30},${PAD_Y} ${BALL.x + 30},${PAD_Y} ${BALL.x + 150},${BALL.y + 200} ${BALL.x - 150},${BALL.y + 200}`} />
-        <ellipse className="pad" cx={BALL.x} cy={PAD_Y} rx="84" ry="17" /><ellipse className="pad two" cx={BALL.x} cy={PAD_Y} rx="56" ry="12" /><ellipse className="pad core3" cx={BALL.x} cy={PAD_Y} rx="28" ry="6" /><ellipse className="hit" cx={BALL.x} cy={PAD_Y} rx="84" ry="17" />
-        {RISE.map((dx, i) => <circle key={dx} className="rise" r={i % 2 ? 1.6 : 2.2}>
-          <animateMotion dur={`${2.6 + (i % 3) * .7}s`} begin={`${i * .45}s`} repeatCount="indefinite" path={`M${BALL.x + dx * .6} ${PAD_Y} L${BALL.x + dx * 2.4} ${BALL.y + 210}`} />
-          <animate attributeName="opacity" values="0;1;.8;0" dur={`${2.6 + (i % 3) * .7}s`} begin={`${i * .45}s`} repeatCount="indefinite" /></circle>)}
-      </g>
       <text className="title" x={BALL.x} y="40" textAnchor="middle" fill="url(#titleGlow)">TRENDX VIRTUAL AI COMMAND CORE</text>
       <rect className="titleline" x={BALL.x - 190} y="49" width="380" height="1.6" fill="url(#titleLine)" />
       <path className="titlegem" d={`M${BALL.x} 45l5 5-5 5-5-5Z`} />
