@@ -231,7 +231,7 @@ function ChartBot({ market, positions, floating, money }: { market: Market | nul
   const text = shown >= 0 ? lines[shown % lines.length] : "";
   return (
     <div className="chatbot" aria-live="polite">
-      {text && <p key={shown} className={`bubble ${prompt.className}`}><small>AI ASSISTANT</small>{text}</p>}
+      {text && <p key={shown} className={`bubble ${prompt.className}`}><small>TRENDX AI ASSISTANT</small>{text}</p>}
       <svg className="bot" viewBox="0 0 120 142" width="96" height="114" aria-hidden="true">
         <defs>
           <linearGradient id="botShell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffffff" /><stop offset=".55" stopColor="#e7ebf1" /><stop offset="1" stopColor="#b9c1cd" /></linearGradient>
