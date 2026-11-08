@@ -356,9 +356,9 @@ export default function Dashboard() {
           <NewsPanel news={state?.market?.news} filter={ea?.news_filter} />
           <Monitor sys={ea?.sys} alive={eaOn} />
           <section className="card dev"><span className="avatar"><Person /></span><div className="acctinfo">
-            <small>Login : {account.login}{account.is_demo ? " (Demo)" : ""}</small>
+            <small><em>Login :</em> {account.login}{account.is_demo ? " (Demo)" : ""}</small>
             <b title={account.company}><em>Broker :</em> {account.company || "-"}</b>
-            <span title={account.server}>Server : {account.server}</span></div>
+            <span title={account.server}><em>Server :</em> {account.server}</span></div>
             <nav className="devlinks" aria-label="Developer profiles"><DevLink url={MYFXBOOK_URL} label="Myfxbook" icon={<ChartSmall />} /><DevLink url={MQL5_URL} label="MQL5" icon={<Code />} /></nav></section>
         </div>
       </main>
