@@ -22,7 +22,7 @@ type Data = {
   last30: { trades: number; wins: number; losses: number };
   daily: { d: string; pl: number; n: number }[];
   monthly: { m: string; pl: number; n: number; all_change: number; cash: number }[];
-  ranking: { model: number; trades: number; wins: number; pl: number }[];
+  ranking: { model: number; trades: number; wins: number; pl: number; pf?: number | null }[];
   dd: { dd: number; amount: number; peak: number };
   marks: { t: string; deal_type: number; price: number }[];
 };
@@ -328,13 +328,14 @@ export default function Dashboard() {
           <section className="card rank-card">
             <header><h2><AiChip /> RANKING MODEL</h2><span>all time &nbsp; {data.ranking.length} models</span></header>
             <div className="scroll"><table>
-              <thead><tr><th>RANK</th><th>MODEL</th><th>TRADES</th><th>WIN</th><th /><th className="rt">P/L</th></tr></thead>
+              <thead><tr><th>RANK</th><th>MODEL</th><th>TRADES</th><th>WIN</th><th>PF</th><th /><th className="rt">P/L</th></tr></thead>
               <tbody>{data.ranking.length ? data.ranking.map((r, i) => {
                 const st = states.get(r.model) ?? 0;
                 return <tr key={r.model} className={i === 0 ? "top1" : ""} style={{ "--i": i } as React.CSSProperties}><td><span className={`rank r${i + 1}`}>{i + 1}</span></td><td className="code">{modelCode(r.model)}{st !== 0 && <em className={st > 0 ? "tagy" : "tagr"}>{st > 0 ? "x2" : "STOP"}</em>}</td>
                   <td>{r.trades}</td><td>{Math.round((r.wins / r.trades) * 100)}%</td>
+                  <td className={`pf ${r.pf === null ? "pos" : (r.pf ?? 0) >= 1.5 ? "pos" : (r.pf ?? 0) < 1 ? "neg" : ""}`} title="Profit factor: gross profit / gross loss of closed trades">{r.pf === null ? "∞" : (r.pf ?? 0).toFixed(2)}</td>
                   <td className="bar"><span className={r.pl >= 0 ? "up" : "down"} style={{ width: `${(Math.abs(r.pl) / peakPl) * 100}%` }} /></td><td className={`rt ${sign(r.pl)}`}>{money(r.pl, true)}</td></tr>;
-              }) : <tr><td colSpan={6} className="none">ยังไม่มีไม้ที่ปิดแล้ว</td></tr>}</tbody>
+              }) : <tr><td colSpan={7} className="none">ยังไม่มีไม้ที่ปิดแล้ว</td></tr>}</tbody>
             </table></div>
           </section>
           <Live market={state?.market} marks={data.marks ?? []} />

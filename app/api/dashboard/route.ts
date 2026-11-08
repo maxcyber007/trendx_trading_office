@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     const [row] = await read<{ id: string }>(`SELECT id FROM accounts WHERE login=$1 AND server=$2`, [who.login, who.server]);
     if (!row) return NextResponse.json({ error: "login required" }, { status: 401 });
     const q = (sql: string) => read<Record<string, any>>(sql, [row.id]);
-    const [online, acc, state, recent30, daily, monthly, ranking, dd, marks] = await Promise.all([
+    const [online, acc, state, recent30, daily, monthly, ranking, dd, marks, pfs] = await Promise.all([
       onlineUsers(req.headers.get("x-visitor"), row.id),
       q(`SELECT id,login,server,company,currency,is_demo,name FROM accounts WHERE id=$1`),
       q(`SELECT balance::float, equity::float, margin::float, to_char(server_time,'YYYY-MM-DD HH24:MI:SS') server_time, ea_alive, ea_state, positions, market,
@@ -41,7 +41,13 @@ export async function GET(req: NextRequest) {
          (SELECT equity, max(equity) OVER (ORDER BY bucket) peak FROM equity_samples WHERE account_id=$1) x`),
       q(`SELECT EXTRACT(EPOCH FROM deal_time)::bigint t, deal_type, price::float FROM deals
          WHERE account_id=$1 AND ${OURS} AND entry=0 ORDER BY deal_time DESC LIMIT 200`),
+      // profit factor per model over closed positions: each position's deals (entry commission included) netted first
+      q(`SELECT model, COALESCE(sum(net) FILTER (WHERE net > 0), 0)::float gp, COALESCE(-sum(net) FILTER (WHERE net < 0), 0)::float gl FROM
+         (SELECT max(model) model, sum(${PL}) net FROM deals WHERE account_id=$1 AND ${OURS}
+          GROUP BY position_id HAVING count(*) FILTER (WHERE ${OUT}) > 0) p GROUP BY model`),
     ]);
+    const pf = new Map(pfs.map((r) => [r.model, r.gl > 0 ? r.gp / r.gl : r.gp > 0 ? null : 0]));
+    for (const r of ranking) r.pf = pf.has(r.model) ? pf.get(r.model) : 0;   // null = no losing trade yet
     return NextResponse.json({ online, account: acc[0], state: state[0] ?? null, last30: recent30[0], daily, monthly, ranking, dd: dd[0], marks });
   } catch (e) {
     console.error(e);
