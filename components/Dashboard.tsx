@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Prompt } from "next/font/google";
 import { MODEL_NAMES, modelCode } from "@/lib/models";
 import NeuralCore from "./NeuralCore";
@@ -197,7 +197,7 @@ const BEAT = "l3-3 3 3h4l2 4 3-13 3 13 2-4h5l4-3 4 3H";
 const prompt = Prompt({ subsets: ["thai", "latin"], weight: ["400", "500"] });
 
 // robot reporter: every minute it says one line about the chart, built from the dashboard's own data (no AI call)
-const BOT_EVERY = 60_000, BOT_SHOW = 9_000, BOT_FIRST = 2_500, BOT_TYPE_MS = 35;
+const BOT_EVERY = 60_000, BOT_SHOW = 9_000, BOT_FIRST = 2_500, BOT_TYPE_MS = 35, BOT_ERASE_MS = 18;
 function ChartBot({ market, positions, floating, money }: { market: Market | null | undefined; positions: Position[]; floating: number; money: Money }) {
   const lines = useMemo(() => {
     const out: string[] = [];
@@ -228,24 +228,31 @@ function ChartBot({ market, positions, floating, money }: { market: Market | nul
     out.push(positions.length ? `ถือ ${positions.length} ไม้ · BUY ${buys} SELL ${sells} · กำไรลอย ${money(floating, true)}` : "ตอนนี้ไม่มีไม้เปิดอยู่ รอสัญญาณ");
     return out;
   }, [market, positions, floating, money]);
-  const [shown, setShown] = useState(-1);   // index of the line on screen, -1 = bubble hidden
+  const [shown, setShown] = useState(-1);   // how many lines have been said so far (picks the line), -1 = bubble hidden
+  const [erasing, setErasing] = useState(false);
   useEffect(() => {
     let n = 0, hide = 0;
-    const say = () => { setShown(n++ % Math.max(1, lines.length)); clearTimeout(hide); hide = window.setTimeout(() => setShown(-1), BOT_SHOW); };
+    // say a line, then after BOT_SHOW start deleting it like backspace; the bubble closes once it is empty
+    const say = () => { setErasing(false); setShown(n++); clearTimeout(hide); hide = window.setTimeout(() => setErasing(true), BOT_SHOW); };
     const first = window.setTimeout(say, BOT_FIRST), every = window.setInterval(say, BOT_EVERY);
     return () => { clearTimeout(first); clearInterval(every); clearTimeout(hide); };
   }, [lines.length]);
   const text = shown >= 0 ? lines[shown % lines.length] : "";
-  // typewriter: the line appears one character at a time each time the bubble opens
   const chars = useMemo(() => Array.from(text), [text]);
+  const len = useRef(0);
+  len.current = chars.length;
   const [typed, setTyped] = useState(0);
+  // typewriter: one more character every BOT_TYPE_MS, or one fewer every BOT_ERASE_MS while erasing
   useEffect(() => {
-    setTyped(0);
     if (shown < 0) return;
-    const t = window.setInterval(() => setTyped((n) => { if (n >= 400) { clearInterval(t); return n; } return n + 1; }), BOT_TYPE_MS);
+    const t = erasing
+      ? window.setInterval(() => setTyped((n) => Math.max(0, Math.min(n, len.current) - 1)), BOT_ERASE_MS)
+      : window.setInterval(() => setTyped((n) => Math.min(n + 1, len.current)), BOT_TYPE_MS);
     return () => clearInterval(t);
-  }, [shown]);
-  const done = typed >= chars.length;
+  }, [shown, erasing]);
+  useEffect(() => { setTyped(0); }, [shown]);
+  useEffect(() => { if (erasing && typed === 0) setShown(-1); }, [erasing, typed]);
+  const done = !erasing && typed >= chars.length;
   return (
     // eye and mouth colour follow the 3-month H1 range: green WIDE, yellow WATCH, red NARROW (green until the bridge sends it)
     <div className={`chatbot ${market?.range_3m ? (market.range_3m >= RANGE_WIDE ? "tone-wide" : market.range_3m >= RANGE_NARROW ? "tone-watch" : "tone-narrow") : ""}`} aria-live="polite">
