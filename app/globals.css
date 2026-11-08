@@ -425,8 +425,8 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 /* Myfxbook / MQL5 buttons on the DEVELOPED BY card */
 .dev > div { min-width: 0; } .dev b { white-space: nowrap; }
 .dev { flex-wrap: wrap; row-gap: 6px; }
-.devlinks { flex-basis: 100%; display: flex; gap: 6px; padding-left: 50px; }   /* a row under the name, lined up with the text */
-.devlink { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border: 1px solid var(--neon2); border-radius: 6px; color: var(--neon); font-size: 12px; font-weight: 700; text-decoration: none; background: rgba(57, 255, 106, .06); transition: background .2s, box-shadow .2s; }
+.devlinks { flex-basis: 100%; display: flex; gap: 16px; padding-left: 50px; }   /* a row under the name, lined up with the text */
+.devlink { display: inline-flex; align-items: center; gap: 4px; padding: 2px 0; border: 0; color: var(--neon); font-size: 12px; font-weight: 700; text-decoration: none; background: none; transition: background .2s, box-shadow .2s; }
 .devlink .ico:last-child { opacity: .7; }
-.devlink[href]:hover, .devlink[href]:focus-visible { background: rgba(57, 255, 106, .16); box-shadow: 0 0 10px rgba(57, 255, 106, .35); outline: none; color: var(--neon); }
+.devlink[href]:hover, .devlink[href]:focus-visible { filter: drop-shadow(0 0 5px var(--neon)); outline: none; color: var(--neon); }
 .devlink[aria-disabled="true"] { cursor: default; }
