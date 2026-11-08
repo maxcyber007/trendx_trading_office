@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { MODEL_NAMES, modelCode } from "@/lib/models";
 import NeuralCore from "./NeuralCore";
-import { AiChip, Bars, Calendar as CalIcon, ChartUp, Clock, Coins, Expand, Eye, Layers, Logo, Logout, Neural, Person, Power, Pulse, Shield, Shrink, Signal, Trophy } from "./icons";
+import { AiChip, Bars, Calendar as CalIcon, ChartSmall, ChartUp, Code, ExtLink, Clock, Coins, Expand, Eye, Layers, Logo, Logout, Neural, Person, Power, Pulse, Shield, Shrink, Signal, Trophy } from "./icons";
 
 type Account = { id: string; login: string; server: string; company: string; currency: string; is_demo: boolean; name: string | null };
 type Position = { ticket: number; symbol: string; type: number; magic: number; volume: number; open_price: number; profit: number };
@@ -29,6 +29,12 @@ type Data = {
 type Money = (v: number, plus?: boolean, digits?: number) => string;
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+// developer profile links shown on the DEVELOPED BY card; empty = the button shows but does not open anything yet
+const MYFXBOOK_URL = "", MQL5_URL = "";
+const DevLink = ({ url, label, icon }: { url: string; label: string; icon: React.ReactNode }) => (
+  <a className="devlink" href={url || undefined} target="_blank" rel="noopener noreferrer" aria-disabled={!url} title={url ? `${label} (new tab)` : `${label} link coming soon`}>{icon}{label}<ExtLink /></a>
+);
+
 const sign = (v: number) => (v > 0 ? "pos" : v < 0 ? "neg" : "");
 // Safari on iPad and older browsers still use the webkit names
 type FullDoc = Document & { webkitFullscreenElement?: Element; webkitExitFullscreen?: () => Promise<void> };
@@ -349,7 +355,8 @@ export default function Dashboard() {
           <Live market={state?.market} marks={data.marks ?? []} />
           <NewsPanel news={state?.market?.news} filter={ea?.news_filter} />
           <Monitor sys={ea?.sys} alive={eaOn} />
-          <section className="card dev"><span className="avatar"><Person /></span><div><small>DEVELOPED BY</small><b>TRENDX TRADING SPACE</b><span>trendx.cloudsync@gmail.com</span></div></section>
+          <section className="card dev"><span className="avatar"><Person /></span><div><small>DEVELOPED BY</small><b>TRENDX TRADING SPACE</b><span>trendx.cloudsync@gmail.com</span></div>
+            <nav className="devlinks" aria-label="Developer profiles"><DevLink url={MYFXBOOK_URL} label="Myfxbook" icon={<ChartSmall />} /><DevLink url={MQL5_URL} label="MQL5" icon={<Code />} /></nav></section>
         </div>
       </main>
       <footer className="status"><span className="dot" /><b>TrendX Ultimate AI Pro</b>

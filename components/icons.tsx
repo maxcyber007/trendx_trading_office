@@ -21,4 +21,7 @@ export const Clock = () => <S><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3
 export const Calendar = () => <S><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" /></S>;
 export const Pulse = () => <S><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M6 12h3l2-4 3 8 2-4h2" /></S>;
 export const AiChip = ({ size = 22 }: { size?: number }) => <S size={size}><rect x="5" y="5" width="14" height="14" rx="3" /><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3" /><text x="12" y="15" textAnchor="middle" fontSize="7" stroke="none" fill="currentColor" fontWeight="700">AI</text></S>;
+export const Code = () => <S size={14}><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16" /></S>;
+export const ChartSmall = () => <S size={14}><path d="M4 20V14M10 20V10M16 20V7" strokeWidth="3" /><path d="M4 9l6-4 3 2 7-4" /></S>;
+export const ExtLink = () => <S size={11}><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" /></S>;
 export const Person = () => <S size={34}><circle cx="12" cy="8" r="4" fill="currentColor" /><path d="M4 21c1-5 4-7 8-7s7 2 8 7Z" fill="currentColor" /></S>;
