@@ -431,3 +431,8 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .monthly .half.up span { animation: barRise .9s cubic-bezier(.2, .9, .25, 1.1) calc(var(--i) * 55ms) backwards, barUp 6s linear infinite; }
 .monthly .half.down span { animation: barRise .9s cubic-bezier(.2, .9, .25, 1.1) calc(var(--i) * 55ms) backwards, barDown 6s linear infinite; }
 .monthly .bars .cur { animation: none; box-shadow: 0 0 10px rgba(57, 255, 106, .35), inset 0 0 10px rgba(57, 255, 106, .12); }
+
+/* average H1 range under the live chart: green wide, yellow watch, red narrow */
+.hrange { display: flex; align-items: center; gap: 10px; margin-top: 2px; font-size: 11px; color: var(--dim); }
+.hrange b { font-weight: 700; } .hrange b.yel, .hrange em.yel { color: var(--yellow); }
+.hrange em { margin-left: auto; font-style: normal; font-weight: 700; letter-spacing: .06em; }

@@ -7,7 +7,11 @@ import { AiChip, Bars, Calendar as CalIcon, ChartUp, Clock, Coins, Expand, Eye, 
 type Account = { id: string; login: string; server: string; company: string; currency: string; is_demo: boolean; name: string | null };
 type Position = { ticket: number; symbol: string; type: number; magic: number; volume: number; open_price: number; profit: number };
 type News = { t: number; name: string; cur: string; imp: number; act: string; fc: string };
-type Market = { symbol: string; candles: [number, number, number, number, number][]; vol_ratio: number; news: News[] };
+type Market = { symbol: string; candles: [number, number, number, number, number][]; vol_ratio: number; range_1m?: number; range_3m?: number; range_days?: number; news: News[] };
+// average H1 range in dollars: backtests of V.1.39.1 made most of their profit when it was above about $6,
+// and were flat or losing when it stayed near $2-5 (2016-2023)
+const RANGE_WIDE = 6, RANGE_NARROW = 5;
+const rangeTone = (v: number) => (v >= RANGE_WIDE ? "pos" : v >= RANGE_NARROW ? "yel" : "neg");
 type Sys = { cpu: number; cores: number; frame: number; peak: number; fps: number; term_mb: number; ram_mb: number; ea_mb: number; anim: boolean };
 type EaState = { version?: string; symbol?: string; magic?: number; virtual_sl?: boolean; session?: string; news_filter?: boolean;
   dd?: { peak: number; max: number; max_pct: number }; sys?: Sys; models?: { no: number; state: number }[] };
@@ -147,6 +151,14 @@ function Live({ market, marks }: { market: Market | null | undefined; marks: Dat
         <rect className={up ? "tagu" : "tagd"} x="276" y={Y(last[4]) - 6} width="50" height="12" rx="2" /><text className="tagp" x="301" y={Y(last[4]) + 3} textAnchor="middle">{last[4].toFixed(2)}</text>
         <text x="0" y="126">{stamp(c[0][0])}</text><text x={X - 2} y="126" textAnchor="end">{hour(last[0])}</text>
       </svg>
+      {market.range_3m ? (
+        <div className="hrange" title={`Average H1 range. Backtests: profit mostly came when the 3-month value was at least $${RANGE_WIDE}; below $${RANGE_NARROW} results were flat or losing.`}>
+          <span>H1 RANGE</span>
+          <span>1M <b className={rangeTone(market.range_1m ?? 0)}>${(market.range_1m ?? 0).toFixed(2)}</b></span>
+          <span>3M <b className={rangeTone(market.range_3m)}>${market.range_3m.toFixed(2)}</b></span>
+          <em className={rangeTone(market.range_3m)}>{market.range_3m >= RANGE_WIDE ? "WIDE" : market.range_3m >= RANGE_NARROW ? "WATCH" : "NARROW"}</em>
+        </div>
+      ) : null}
     </section>
   );
 }
