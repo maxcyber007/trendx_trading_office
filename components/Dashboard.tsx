@@ -30,7 +30,7 @@ type Money = (v: number, plus?: boolean, digits?: number) => string;
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 // developer profile links shown on the DEVELOPED BY card; empty = the button shows but does not open anything yet
-const MYFXBOOK_URL = "", MQL5_URL = "";
+const MYFXBOOK_URL = "https://www.myfxbook.com", MQL5_URL = "https://www.mql5.com";
 const DevLink = ({ url, label, icon }: { url: string; label: string; icon: React.ReactNode }) => (
   <a className="devlink" href={url || undefined} target="_blank" rel="noopener noreferrer" aria-disabled={!url} title={url ? `${label} (new tab)` : `${label} link coming soon`}>{icon}{label}<ExtLink /></a>
 );
