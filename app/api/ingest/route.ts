@@ -1,6 +1,10 @@
 import { timingSafeEqual } from "node:crypto";
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
+import { analyzeIfDue } from "@/lib/analysis";
 import { db } from "@/lib/db";
+
+// the hourly market commentary runs after the response, inside this function's time limit
+export const maxDuration = 60;
 
 type Deal = { ticket: number; position: number; time: number; symbol: string; type: number; entry: number; magic: number;
   volume: number; price: number; commission: number; swap: number; profit: number; comment: string };
@@ -51,6 +55,7 @@ export async function POST(req: NextRequest) {
        VALUES ($1,to_timestamp(floor(extract(epoch from now())/300)*300),$2,$3) ON CONFLICT DO NOTHING`,
       [id, s.balance, s.equity]);
     await c.query("COMMIT");
+    if (body.market) after(() => analyzeIfDue(body.market));
     return NextResponse.json({ ok: true, deals: body.deals?.length ?? 0 });
   } catch (e) {
     await c.query("ROLLBACK");

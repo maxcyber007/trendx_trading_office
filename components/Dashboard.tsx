@@ -26,8 +26,12 @@ type Data = {
   ranking: { model: number; trades: number; wins: number; pl: number; pf?: number | null }[];
   dd: { dd: number; amount: number; peak: number };
   marks: { t: string; deal_type: number; price: number }[];
+  analysis?: Analysis | null;
 };
 type Money = (v: number, plus?: boolean, digits?: number) => string;
+// hourly view from two AI models (lib/analysis.ts): joint direction and signal, then each model's reason; names are not shown
+type ModelView = { bias: number; confidence: number; signal: string; reason: string; lines: string[] };
+type Analysis = { bar: number; bias: number; confidence: number; signal: string; agree: boolean; views: ModelView[]; at: number };
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 // developer profile links shown on the DEVELOPED BY card; empty = the button shows but does not open anything yet
@@ -198,9 +202,19 @@ const prompt = Prompt({ subsets: ["thai", "latin"], weight: ["400", "500"] });
 
 // robot reporter: every minute it says one line about the chart, built from the dashboard's own data (no AI call)
 const BOT_EVERY = 60_000, BOT_SHOW = 9_000, BOT_FIRST = 2_500, BOT_TYPE_MS = 35, BOT_ERASE_MS = 18, BOT_FADE_MS = 600;
-function ChartBot({ market, positions, floating, money }: { market: Market | null | undefined; positions: Position[]; floating: number; money: Money }) {
+function ChartBot({ market, positions, floating, money, ai }: { market: Market | null | undefined; positions: Position[]; floating: number; money: Money; ai?: Analysis | null }) {
+  // the AI lines come first: joint signal and direction, then each model's reason and notes
+  const aiLines = useMemo(() => {
+    const views = ai?.views ?? [];
+    if (!ai || !views.length) return [] as string[];
+    const dir = (b: number) => (b > 0 ? "ขาขึ้น" : b < 0 ? "ขาลง" : "ไซด์เวย์");
+    const at = new Date(ai.at * 1000).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
+    const head = `AI วิเคราะห์ ${at} · สัญญาณ ${ai.signal.toUpperCase()} · ทิศทาง ${dir(ai.bias)} · มั่นใจ ${ai.confidence}%`
+      + (views.length > 1 ? (ai.agree ? " · AI เห็นตรงกัน" : " · AI เห็นต่างกัน รอดูก่อน") : "");
+    return [head, ...views.flatMap((v) => [...(v.reason ? [`เหตุผล: ${v.reason}`] : []), ...v.lines])];
+  }, [ai]);
   const lines = useMemo(() => {
-    const out: string[] = [];
+    const out: string[] = [...aiLines];
     const c = market?.candles ?? [];
     if (c.length) {
       const last = c[c.length - 1], bar = ((last[4] - last[1]) / last[1]) * 100;
@@ -227,7 +241,7 @@ function ChartBot({ market, positions, floating, money }: { market: Market | nul
     const buys = positions.filter((p) => p.type === 0).length, sells = positions.length - buys;
     out.push(positions.length ? `ถือ ${positions.length} ไม้ · BUY ${buys} SELL ${sells} · กำไรลอย ${money(floating, true)}` : "ตอนนี้ไม่มีไม้เปิดอยู่ รอสัญญาณ");
     return out;
-  }, [market, positions, floating, money]);
+  }, [market, positions, floating, money, aiLines]);
   const [shown, setShown] = useState(-1);   // how many lines have been said so far (picks the line), -1 = bubble hidden
   const [erasing, setErasing] = useState(false);
   useEffect(() => {
@@ -435,7 +449,7 @@ export default function Dashboard() {
 
         <div className="center">
           <NeuralCore states={states} side={side} />
-          <ChartBot market={state?.market} positions={positions} floating={floating} money={money} />
+          <ChartBot market={state?.market} positions={positions} floating={floating} money={money} ai={data.analysis} />
         </div>
 
         <div className="right">
