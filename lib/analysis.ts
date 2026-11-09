@@ -20,11 +20,12 @@ const keyFor = (model: string) => (isGemini(model) ? process.env.GEMINI_API_KEY 
 const keysReady = () => MODELS.length > 0 && MODELS.every((m) => !!keyFor(m));
 const LINES_PER_MODEL = 2;
 const TIMEOUT_MS = 45_000;
-const RETRY_MINUTES = 10;   // a failed or stuck request may be tried again after this long
-// how often to analyse: 3600 = once per H1 bar (keyed by the bar), anything shorter = once per slot of that many seconds.
-// TESTING: every minute for the paid models (1,440 calls a day each); every 5 minutes when a free-tier Gemini model is in the
-// list (288 a day), to stay inside its daily quota. Set AI_EVERY_SECONDS=3600 for hourly.
-const EVERY = Math.max(60, Number(process.env.AI_EVERY_SECONDS) || (MODELS.some(isGemini) ? 300 : 60));
+// a failed or stuck request may be tried again after this long; longer on the Gemini free tier so retries don't eat the daily quota
+const RETRY_MINUTES = MODELS.some(isGemini) ? 30 : 10;
+// how often to analyse: exactly 3600 = once per H1 bar (keyed by the bar), anything else = once per slot of that many seconds.
+// Paid models: every minute while testing (1,440 calls a day each). Gemini free tier allows only 20 requests a day
+// (5 a minute), so with a Gemini model in the list the default is every 90 minutes = 16 a day, leaving room for retries.
+const EVERY = Math.max(60, Number(process.env.AI_EVERY_SECONDS) || (MODELS.some(isGemini) ? 5400 : 60));
 
 type Candle = [number, number, number, number, number];
 type News = { t: number; name: string; cur: string; imp: number; act: string; fc: string };
@@ -56,7 +57,7 @@ export async function analyzeIfDue(m: MarketIn | null | undefined): Promise<void
   if (!keysReady() || !m?.symbol || !Array.isArray(m.candles) || m.candles.length < 25) return;
   // h1 = the H1 bar now open (broker server time); bar = the key of this analysis: that bar, or the current time slot
   const h1 = m.candles[m.candles.length - 1][0];
-  const bar = EVERY >= 3600 ? h1 : Math.floor(Date.now() / 1000 / EVERY) * EVERY;
+  const bar = EVERY === 3600 ? h1 : Math.floor(Date.now() / 1000 / EVERY) * EVERY;
   const w = wait.get(m.symbol);
   if (w && w.bar === bar && Date.now() < w.until) return;
   try {
