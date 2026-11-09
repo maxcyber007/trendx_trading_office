@@ -1,24 +1,30 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { z } from "zod";
 import { db, read } from "./db";
 
 // once per H1 bar (every EVERY seconds while testing) the web asks the AI models, side by side, for a direction, a reason and a
 // buy/sell/wait signal. The bubble reads out the joint view; the joint signal is stored for V.1.39.1 to check later through
 // /api/signal. Nothing here changes a trade by itself.
-// AI_MODELS picks the models: names starting with "claude-" go to the Claude API (ANTHROPIC_API_KEY), the rest to Ollama Cloud
-// (OLLAMA_API_KEY). Claude Haiku 5.5 for now; AI_MODELS=deepseek-v4.1-flash,glm-5.3-flash switches back to the Ollama pair.
+// AI_MODELS picks the models by name:
+// - "gemini-..." -> Gemini API (GEMINI_API_KEY from Google AI Studio). gemini-3.8-flash on the free tier for now.
+// - "claude-..." -> Claude API (ANTHROPIC_API_KEY), e.g. claude-haiku-5-5
+// - anything else -> Ollama Cloud (OLLAMA_API_KEY), e.g. deepseek-v4.1-flash,glm-5.3-flash
 const OLLAMA_URL = process.env.OLLAMA_URL || "https://ollama.com/api/chat";
-const MODELS = (process.env.AI_MODELS || "claude-haiku-5-5").split(",").map((s) => s.trim()).filter(Boolean);
+const MODELS = (process.env.AI_MODELS || "gemini-3.8-flash").split(",").map((s) => s.trim()).filter(Boolean);
 const isClaude = (model: string) => model.startsWith("claude-");
+const isGemini = (model: string) => model.startsWith("gemini-");
+const keyFor = (model: string) => (isGemini(model) ? process.env.GEMINI_API_KEY : isClaude(model) ? process.env.ANTHROPIC_API_KEY : process.env.OLLAMA_API_KEY);
 // every model needs its provider's key on the server
-const keysReady = () => MODELS.length > 0 && MODELS.every((m) => !!(isClaude(m) ? process.env.ANTHROPIC_API_KEY : process.env.OLLAMA_API_KEY));
+const keysReady = () => MODELS.length > 0 && MODELS.every((m) => !!keyFor(m));
 const LINES_PER_MODEL = 2;
 const TIMEOUT_MS = 45_000;
 const RETRY_MINUTES = 10;   // a failed or stuck request may be tried again after this long
 // how often to analyse: 3600 = once per H1 bar (keyed by the bar), anything shorter = once per slot of that many seconds.
-// TESTING: every minute for now (1,440 calls a day per model); set AI_EVERY_SECONDS=3600 or change this back for hourly.
-const EVERY = Math.max(60, Number(process.env.AI_EVERY_SECONDS) || 60);
+// TESTING: every minute for the paid models (1,440 calls a day each); every 5 minutes when a free-tier Gemini model is in the
+// list (288 a day), to stay inside its daily quota. Set AI_EVERY_SECONDS=3600 for hourly.
+const EVERY = Math.max(60, Number(process.env.AI_EVERY_SECONDS) || (MODELS.some(isGemini) ? 300 : 60));
 
 type Candle = [number, number, number, number, number];
 type News = { t: number; name: string; cur: string; imp: number; act: string; fc: string };
@@ -157,6 +163,35 @@ async function askClaude(model: string, user: string): Promise<unknown> {
   return r.parsed_output;
 }
 
+// the same reply shape as plain JSON Schema, for Gemini's structured output
+const REPLY_SCHEMA = {
+  type: "object",
+  properties: {
+    bias: { type: "string", enum: ["up", "down", "sideways"] },
+    confidence: { type: "number" },
+    signal: { type: "string", enum: ["buy", "sell", "wait"] },
+    reason: { type: "string" },
+    lines: { type: "array", items: { type: "string" } },
+  },
+  required: ["bias", "confidence", "signal", "reason", "lines"],
+};
+
+let gemini: GoogleGenAI | null = null;
+async function askGemini(model: string, user: string): Promise<unknown> {
+  // no retry: a second try would not fit in the function's 60-second limit; the next slot tries again.
+  // GEMINI_BASE_URL is only for local tests against a stand-in server.
+  gemini ??= new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions: {
+    timeout: TIMEOUT_MS, retryOptions: { attempts: 1 }, ...(process.env.GEMINI_BASE_URL ? { baseUrl: process.env.GEMINI_BASE_URL } : {}) } });
+  const r = await gemini.models.generateContent({
+    model, contents: user,
+    config: { systemInstruction: SYSTEM, responseMimeType: "application/json", responseJsonSchema: REPLY_SCHEMA,
+      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } },   // a short routine read: low thinking keeps it fast and inside the quota
+  });
+  const text = r.text;
+  if (!text) throw new Error(`${model} empty reply (${r.candidates?.[0]?.finishReason ?? "no candidate"})`);
+  return JSON.parse(text);
+}
+
 async function askOllama(model: string, user: string): Promise<unknown> {
   const res = await fetch(OLLAMA_URL, {
     method: "POST",
@@ -183,7 +218,7 @@ async function ask(model: string, m: MarketIn): Promise<ModelView> {
     todays_usd_news_bangkok_time: (m.news ?? []).map((n) => ({ time: bkk(n.t), name: n.name, forecast: n.fc || null, actual: n.act || null })),
   };
   const user = JSON.stringify(data);
-  const out = (isClaude(model) ? await askClaude(model, user) : await askOllama(model, user)) as Record<string, any>;
+  const out = (isGemini(model) ? await askGemini(model, user) : isClaude(model) ? await askClaude(model, user) : await askOllama(model, user)) as Record<string, any>;
   const lines = (Array.isArray(out.lines) ? out.lines : []).map((s: unknown) => String(s).trim()).filter(Boolean).slice(0, LINES_PER_MODEL).map((s: string) => s.slice(0, 140));
   if (!lines.length) throw new Error(`${model} reply had no lines`);
   const bias = out.bias === "up" ? 1 : out.bias === "down" ? -1 : 0;
