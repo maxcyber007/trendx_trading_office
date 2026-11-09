@@ -209,7 +209,7 @@ function ChartBot({ market, positions, floating, money, ai, aiState }: { market:
   const aiLines = useMemo(() => {
     const views = ai?.views ?? [];
     // no analysis yet: say why, so a missing key or a failing model shows on the page
-    const why = aiState?.state === "no_key" || aiState?.state === "error" ? "AI AGENTS DISCONNECT"
+    const why = aiState?.state === "no_key" || aiState?.state === "error" ? "AI AGENTS CONNECTING..."
       : aiState?.state === "no_rows" ? "AI ยังไม่ทำงาน: ยังไม่มีข้อมูลจาก MT5 Service มาเริ่มการวิเคราะห์"
       : aiState?.state === "working" ? "AI กำลังวิเคราะห์ตลาด..." : "";
     if (!ai || !views.length) return why ? [why] : [];
