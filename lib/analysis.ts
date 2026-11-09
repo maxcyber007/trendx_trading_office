@@ -1,15 +1,23 @@
+import Anthropic from "@anthropic-ai/sdk";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { z } from "zod";
 import { db, read } from "./db";
 
-// once per H1 bar (every EVERY seconds while testing) the web asks two Ollama Cloud models, side by side, for a direction, a reason and a buy/sell/wait signal.
-// The bubble reads out the joint view; the joint signal is stored for V.1.39.1 to check later through /api/signal.
-// Nothing here changes a trade by itself.
+// once per H1 bar (every EVERY seconds while testing) the web asks the AI models, side by side, for a direction, a reason and a
+// buy/sell/wait signal. The bubble reads out the joint view; the joint signal is stored for V.1.39.1 to check later through
+// /api/signal. Nothing here changes a trade by itself.
+// AI_MODELS picks the models: names starting with "claude-" go to the Claude API (ANTHROPIC_API_KEY), the rest to Ollama Cloud
+// (OLLAMA_API_KEY). Claude Haiku 5.5 for now; AI_MODELS=deepseek-v4.1-flash,glm-5.3-flash switches back to the Ollama pair.
 const OLLAMA_URL = process.env.OLLAMA_URL || "https://ollama.com/api/chat";
-const MODELS = (process.env.OLLAMA_MODELS || "deepseek-v4.1-flash,glm-5.3-flash").split(",").map((s) => s.trim()).filter(Boolean);
+const MODELS = (process.env.AI_MODELS || "claude-haiku-5-5").split(",").map((s) => s.trim()).filter(Boolean);
+const isClaude = (model: string) => model.startsWith("claude-");
+// every model needs its provider's key on the server
+const keysReady = () => MODELS.length > 0 && MODELS.every((m) => !!(isClaude(m) ? process.env.ANTHROPIC_API_KEY : process.env.OLLAMA_API_KEY));
 const LINES_PER_MODEL = 2;
 const TIMEOUT_MS = 45_000;
 const RETRY_MINUTES = 10;   // a failed or stuck request may be tried again after this long
 // how often to analyse: 3600 = once per H1 bar (keyed by the bar), anything shorter = once per slot of that many seconds.
-// TESTING: every minute for now (2 models x 1,440 calls a day); set AI_EVERY_SECONDS=3600 or change this back for hourly.
+// TESTING: every minute for now (1,440 calls a day per model); set AI_EVERY_SECONDS=3600 or change this back for hourly.
 const EVERY = Math.max(60, Number(process.env.AI_EVERY_SECONDS) || 60);
 
 type Candle = [number, number, number, number, number];
@@ -39,8 +47,7 @@ const wait = new Map<string, { bar: number; until: number }>();
 const hold = (symbol: string, bar: number, ms: number) => wait.set(symbol, { bar, until: Date.now() + ms });
 
 export async function analyzeIfDue(m: MarketIn | null | undefined): Promise<void> {
-  const key = process.env.OLLAMA_API_KEY;
-  if (!key || !m?.symbol || !Array.isArray(m.candles) || m.candles.length < 25) return;
+  if (!keysReady() || !m?.symbol || !Array.isArray(m.candles) || m.candles.length < 25) return;
   // h1 = the H1 bar now open (broker server time); bar = the key of this analysis: that bar, or the current time slot
   const h1 = m.candles[m.candles.length - 1][0];
   const bar = EVERY >= 3600 ? h1 : Math.floor(Date.now() / 1000 / EVERY) * EVERY;
@@ -58,8 +65,8 @@ export async function analyzeIfDue(m: MarketIn | null | undefined): Promise<void
     if (!claim.rowCount) { hold(m.symbol, bar, 60_000); return; }
     hold(m.symbol, bar, Infinity);
     try {
-      // both models at once; one that fails is left out and the other still speaks
-      const got = await Promise.allSettled(MODELS.map((model) => ask(key, model, m)));
+      // all models at once; one that fails is left out and the others still speak
+      const got = await Promise.allSettled(MODELS.map((model) => ask(model, m)));
       const views = got.flatMap((g) => (g.status === "fulfilled" ? [g.value] : []));
       const failed = MODELS.filter((_, i) => got[i].status === "rejected");
       got.forEach((g, i) => g.status === "rejected" && console.error("market analysis", MODELS[i], String(g.reason)));
@@ -85,7 +92,7 @@ export async function analyzeIfDue(m: MarketIn | null | undefined): Promise<void
 // a request in progress, or a failed attempt (the details stay in the table and the server log, not on the page)
 export type AiStatus = { state: "ok" | "no_key" | "no_rows" | "working" | "error"; at?: number };
 export async function aiStatus(symbol: string | undefined): Promise<AiStatus> {
-  if (!process.env.OLLAMA_API_KEY) return { state: "no_key" };
+  if (!keysReady()) return { state: "no_key" };
   if (!symbol) return { state: "no_rows" };
   try {
     await table();
@@ -127,7 +134,43 @@ const SYSTEM = `คุณคือ TRENDX AI AGENTS ผู้วิเครา�
 - lines เป็นภาษาไทย 2 ประโยค ประโยคละไม่เกิน 90 ตัวอักษร เรื่องระดับราคาสำคัญ ความผันผวน หรือข่าวที่ต้องระวัง
 - ใช้เฉพาะตัวเลขจากข้อมูลที่ให้ ห้ามแต่งข้อมูลหรือข่าวเพิ่ม ห้ามพูดถึงขนาดไม้`;
 
-async function ask(key: string, model: string, m: MarketIn): Promise<ModelView> {
+// the reply every model gives; Claude is held to it by structured output, Ollama by the prompt and JSON mode
+const Reply = z.object({
+  bias: z.enum(["up", "down", "sideways"]),
+  confidence: z.number(),
+  signal: z.enum(["buy", "sell", "wait"]),
+  reason: z.string(),
+  lines: z.array(z.string()),
+});
+
+let claude: Anthropic | null = null;
+async function askClaude(model: string, user: string): Promise<unknown> {
+  // no retry: a second try would not fit in the function's 60-second limit; the next slot tries again
+  claude ??= new Anthropic({ timeout: TIMEOUT_MS, maxRetries: 0 });
+  const r = await claude.messages.parse({
+    model, max_tokens: 4000, system: SYSTEM,
+    messages: [{ role: "user", content: user }],
+    output_config: { effort: "low", format: zodOutputFormat(Reply) },   // a short routine read: low effort keeps thinking tokens down
+  });
+  if (r.stop_reason === "refusal") throw new Error(`${model} refused`);
+  if (!r.parsed_output) throw new Error(`${model} reply did not parse (${r.stop_reason})`);
+  return r.parsed_output;
+}
+
+async function askOllama(model: string, user: string): Promise<unknown> {
+  const res = await fetch(OLLAMA_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.OLLAMA_API_KEY}` },
+    body: JSON.stringify({ model, stream: false, format: "json", options: { temperature: 0.3 },
+      messages: [{ role: "system", content: SYSTEM }, { role: "user", content: user }] }),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+  if (!res.ok) throw new Error(`${model} ${res.status} ${(await res.text()).slice(0, 200)}`);
+  const body = await res.json();
+  return JSON.parse(String(body?.message?.content ?? "").replace(/^```(?:json)?\s*|\s*```$/g, ""));
+}
+
+async function ask(model: string, m: MarketIn): Promise<ModelView> {
   const closed = m.candles.slice(0, -1);   // the newest candle has just opened
   const bkk = (t: number) => new Date(t * 1000).toLocaleString("en-GB", { timeZone: "Asia/Bangkok", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
   const data = {
@@ -139,17 +182,8 @@ async function ask(key: string, model: string, m: MarketIn): Promise<ModelView> 
     volatility_ratio_recent_vs_normal: m.vol_ratio ?? null,
     todays_usd_news_bangkok_time: (m.news ?? []).map((n) => ({ time: bkk(n.t), name: n.name, forecast: n.fc || null, actual: n.act || null })),
   };
-  const res = await fetch(OLLAMA_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-    body: JSON.stringify({ model, stream: false, format: "json", options: { temperature: 0.3 },
-      messages: [{ role: "system", content: SYSTEM }, { role: "user", content: JSON.stringify(data) }] }),
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  });
-  if (!res.ok) throw new Error(`${model} ${res.status} ${(await res.text()).slice(0, 200)}`);
-  const body = await res.json();
-  const text = String(body?.message?.content ?? "").replace(/^```(?:json)?\s*|\s*```$/g, "");
-  const out = JSON.parse(text);
+  const user = JSON.stringify(data);
+  const out = (isClaude(model) ? await askClaude(model, user) : await askOllama(model, user)) as Record<string, any>;
   const lines = (Array.isArray(out.lines) ? out.lines : []).map((s: unknown) => String(s).trim()).filter(Boolean).slice(0, LINES_PER_MODEL).map((s: string) => s.slice(0, 140));
   if (!lines.length) throw new Error(`${model} reply had no lines`);
   const bias = out.bias === "up" ? 1 : out.bias === "down" ? -1 : 0;
