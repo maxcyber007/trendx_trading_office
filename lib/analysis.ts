@@ -1,6 +1,6 @@
 import { db, read } from "./db";
 
-// once per H1 bar the web asks two Ollama Cloud models, side by side, for a direction, a reason and a buy/sell/wait signal.
+// once per H1 bar (every EVERY seconds while testing) the web asks two Ollama Cloud models, side by side, for a direction, a reason and a buy/sell/wait signal.
 // The bubble reads out the joint view; the joint signal is stored for V.1.39.1 to check later through /api/signal.
 // Nothing here changes a trade by itself.
 const OLLAMA_URL = process.env.OLLAMA_URL || "https://ollama.com/api/chat";
@@ -8,6 +8,9 @@ const MODELS = (process.env.OLLAMA_MODELS || "deepseek-v4.1-flash,glm-5.3-flash"
 const LINES_PER_MODEL = 2;
 const TIMEOUT_MS = 45_000;
 const RETRY_MINUTES = 10;   // a failed or stuck request may be tried again after this long
+// how often to analyse: 3600 = once per H1 bar (keyed by the bar), anything shorter = once per slot of that many seconds.
+// TESTING: every minute for now (2 models x 1,440 calls a day); set AI_EVERY_SECONDS=3600 or change this back for hourly.
+const EVERY = Math.max(60, Number(process.env.AI_EVERY_SECONDS) || 60);
 
 type Candle = [number, number, number, number, number];
 type News = { t: number; name: string; cur: string; imp: number; act: string; fc: string };
@@ -27,7 +30,8 @@ const table = () => (ready ??= db().query(
      created_at TIMESTAMPTZ NOT NULL DEFAULT now(), done_at TIMESTAMPTZ,
      PRIMARY KEY (symbol, bar_time));
    ALTER TABLE market_analysis ADD COLUMN IF NOT EXISTS signal TEXT;
-   ALTER TABLE market_analysis ADD COLUMN IF NOT EXISTS reason TEXT;`,
+   ALTER TABLE market_analysis ADD COLUMN IF NOT EXISTS reason TEXT;
+   ALTER TABLE market_analysis ADD COLUMN IF NOT EXISTS h1_bar BIGINT;`,
 ).catch((e) => { ready = null; throw e; }));
 
 // when this server instance should look at a symbol's bar again, so the bridge's 2-second sends cost no query
@@ -37,17 +41,19 @@ const hold = (symbol: string, bar: number, ms: number) => wait.set(symbol, { bar
 export async function analyzeIfDue(m: MarketIn | null | undefined): Promise<void> {
   const key = process.env.OLLAMA_API_KEY;
   if (!key || !m?.symbol || !Array.isArray(m.candles) || m.candles.length < 25) return;
-  const bar = m.candles[m.candles.length - 1][0];
+  // h1 = the H1 bar now open (broker server time); bar = the key of this analysis: that bar, or the current time slot
+  const h1 = m.candles[m.candles.length - 1][0];
+  const bar = EVERY >= 3600 ? h1 : Math.floor(Date.now() / 1000 / EVERY) * EVERY;
   const w = wait.get(m.symbol);
   if (w && w.bar === bar && Date.now() < w.until) return;
   try {
     await table();
     // claim the bar: only one request wins, a finished bar is never asked twice
     const claim = await db().query(
-      `INSERT INTO market_analysis (symbol, bar_time, model) VALUES ($1, $2, $3)
+      `INSERT INTO market_analysis (symbol, bar_time, model, h1_bar) VALUES ($1, $2, $3, $4)
        ON CONFLICT (symbol, bar_time) DO UPDATE SET created_at = now(), error = NULL, model = $3
          WHERE market_analysis.results IS NULL AND market_analysis.created_at < now() - interval '${RETRY_MINUTES} minutes'
-       RETURNING 1`, [m.symbol, bar, MODELS.join(",")]);
+       RETURNING 1`, [m.symbol, bar, MODELS.join(","), h1]);
     // not ours: finished, or another instance is asking; look again in a minute in case that one fails
     if (!claim.rowCount) { hold(m.symbol, bar, 60_000); return; }
     hold(m.symbol, bar, Infinity);
@@ -82,7 +88,7 @@ export async function latestAnalysis(symbol: string | undefined): Promise<Analys
     await table();
     const [r] = await read<Record<string, any>>(
       `SELECT bar_time::float bar, bias, confidence, signal, results, EXTRACT(EPOCH FROM done_at)::float at FROM market_analysis
-       WHERE symbol=$1 AND results IS NOT NULL AND done_at > now() - interval '6 hours' ORDER BY bar_time DESC LIMIT 1`, [symbol]);
+       WHERE symbol=$1 AND results IS NOT NULL AND done_at > now() - interval '6 hours' ORDER BY done_at DESC LIMIT 1`, [symbol]);
     if (!r) return null;
     const views: ModelView[] = r.results.views ?? [];
     return { bar: r.bar, bias: r.bias ?? 0, confidence: r.confidence ?? 0, signal: r.signal ?? "wait", at: r.at,
@@ -137,7 +143,7 @@ async function ask(key: string, model: string, m: MarketIn): Promise<ModelView> 
 export async function latestSignal(symbol: string) {
   await table();
   const [r] = await read<Record<string, any>>(
-    `SELECT symbol, bar_time::float bar_time, signal, bias, confidence, reason, EXTRACT(EPOCH FROM now() - done_at)::int age_seconds
-     FROM market_analysis WHERE symbol=$1 AND results IS NOT NULL ORDER BY bar_time DESC LIMIT 1`, [symbol]);
+    `SELECT symbol, COALESCE(h1_bar, bar_time)::float bar_time, signal, bias, confidence, reason, EXTRACT(EPOCH FROM now() - done_at)::int age_seconds
+     FROM market_analysis WHERE symbol=$1 AND results IS NOT NULL ORDER BY done_at DESC LIMIT 1`, [symbol]);
   return r ?? null;
 }

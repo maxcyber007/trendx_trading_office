@@ -209,8 +209,7 @@ function ChartBot({ market, positions, floating, money, ai }: { market: Market |
     if (!ai || !views.length) return [] as string[];
     const dir = (b: number) => (b > 0 ? "ขาขึ้น" : b < 0 ? "ขาลง" : "ไซด์เวย์");
     const at = new Date(ai.at * 1000).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
-    const head = `AI วิเคราะห์ ${at} · สัญญาณ ${ai.signal.toUpperCase()} · ทิศทาง ${dir(ai.bias)} · มั่นใจ ${ai.confidence}%`
-      + (views.length > 1 ? (ai.agree ? " · AI เห็นตรงกัน" : " · AI เห็นต่างกัน รอดูก่อน") : "");
+    const head = `AI วิเคราะห์ ${at} · สัญญาณ ${ai.signal.toUpperCase()} · ทิศทาง ${dir(ai.bias)} · มั่นใจ ${ai.confidence}%`;
     return [head, ...views.flatMap((v) => [...(v.reason ? [`เหตุผล: ${v.reason}`] : []), ...v.lines])];
   }, [ai]);
   const lines = useMemo(() => {
