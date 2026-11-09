@@ -27,7 +27,7 @@ type Data = {
   dd: { dd: number; amount: number; peak: number };
   marks: { t: string; deal_type: number; price: number }[];
   analysis?: Analysis | null;
-  ai_status?: { state: string; error?: string; at?: number };
+  ai_status?: { state: string; at?: number };
 };
 type Money = (v: number, plus?: boolean, digits?: number) => string;
 // hourly view from two AI models (lib/analysis.ts): joint direction and signal, then each model's reason; names are not shown
@@ -201,23 +201,23 @@ const BEAT = "l3-3 3 3h4l2 4 3-13 3 13 2-4h5l4-3 4 3H";
 // the robot's speech bubble uses Prompt (Thai and Latin)
 const prompt = Prompt({ subsets: ["thai", "latin"], weight: ["400", "500"] });
 
-// robot reporter: every minute it says one line about the chart, built from the dashboard's own data (no AI call)
-const BOT_EVERY = 60_000, BOT_SHOW = 9_000, BOT_FIRST = 2_500, BOT_TYPE_MS = 35, BOT_ERASE_MS = 18, BOT_FADE_MS = 600;
+// robot reporter: says its lines one after another without stopping; each is typed, held BOT_HOLD to read, erased,
+// the bubble closes, and the next line opens BOT_GAP later
+const BOT_FIRST = 2_500, BOT_HOLD = 6_000, BOT_GAP = 800, BOT_TYPE_MS = 35, BOT_ERASE_MS = 18, BOT_FADE_MS = 600;
 function ChartBot({ market, positions, floating, money, ai, aiState }: { market: Market | null | undefined; positions: Position[]; floating: number; money: Money; ai?: Analysis | null; aiState?: Data["ai_status"] }) {
   // the AI lines come first: joint signal and direction, then each model's reason and notes
   const aiLines = useMemo(() => {
     const views = ai?.views ?? [];
     // no analysis yet: say why, so a missing key or a failing model shows on the page
-    const why = aiState?.state === "no_key" ? "AI ยังไม่ทำงาน: ยังไม่ได้ตั้ง OLLAMA_API_KEY บน Vercel หรือยังไม่ได้ Redeploy"
+    const why = aiState?.state === "no_key" || aiState?.state === "error" ? "AI AGENTS ERROR"
       : aiState?.state === "no_rows" ? "AI ยังไม่ทำงาน: ยังไม่มีข้อมูลจาก MT5 Service มาเริ่มการวิเคราะห์"
-      : aiState?.state === "error" ? `AI วิเคราะห์ไม่สำเร็จ: ${aiState.error ?? ""}`
       : aiState?.state === "working" ? "AI กำลังวิเคราะห์ตลาด..." : "";
     if (!ai || !views.length) return why ? [why] : [];
     const dir = (b: number) => (b > 0 ? "ขาขึ้น" : b < 0 ? "ขาลง" : "ไซด์เวย์");
     const at = new Date(ai.at * 1000).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
     const head = `AI วิเคราะห์ ${at} · สัญญาณ ${ai.signal.toUpperCase()} · ทิศทาง ${dir(ai.bias)} · มั่นใจ ${ai.confidence}%`;
     return [head, ...views.flatMap((v) => [...(v.reason ? [`เหตุผล: ${v.reason}`] : []), ...v.lines])];
-  }, [ai, aiState?.state, aiState?.error]);
+  }, [ai, aiState?.state]);
   const lines = useMemo(() => {
     const out: string[] = [...aiLines];
     const c = market?.candles ?? [];
@@ -249,13 +249,13 @@ function ChartBot({ market, positions, floating, money, ai, aiState }: { market:
   }, [market, positions, floating, money, aiLines]);
   const [shown, setShown] = useState(-1);   // how many lines have been said so far (picks the line), -1 = bubble hidden
   const [erasing, setErasing] = useState(false);
+  const said = useRef(0);
+  // bubble closed: open the next line (the first one waits BOT_FIRST after the page loads)
   useEffect(() => {
-    let n = 0, hide = 0;
-    // say a line, then after BOT_SHOW start deleting it like backspace; the bubble closes once it is empty
-    const say = () => { setErasing(false); setShown(n++); clearTimeout(hide); hide = window.setTimeout(() => setErasing(true), BOT_SHOW); };
-    const first = window.setTimeout(say, BOT_FIRST), every = window.setInterval(say, BOT_EVERY);
-    return () => { clearTimeout(first); clearInterval(every); clearTimeout(hide); };
-  }, [lines.length]);
+    if (shown >= 0) return;
+    const t = window.setTimeout(() => { setErasing(false); setShown(said.current++); }, said.current ? BOT_GAP : BOT_FIRST);
+    return () => clearTimeout(t);
+  }, [shown]);
   const text = shown >= 0 ? lines[shown % lines.length] : "";
   const chars = useMemo(() => Array.from(text), [text]);
   const len = useRef(0);
@@ -278,6 +278,12 @@ function ChartBot({ market, positions, floating, money, ai, aiState }: { market:
     return () => clearTimeout(t);
   }, [closing]);
   const done = !erasing && typed >= chars.length;
+  // fully typed: hold it to read, then start deleting it like backspace
+  useEffect(() => {
+    if (!done || shown < 0) return;
+    const t = window.setTimeout(() => setErasing(true), BOT_HOLD);
+    return () => clearTimeout(t);
+  }, [done, shown]);
   return (
     // eye and mouth colour follow the 3-month H1 range: green WIDE, yellow WATCH, red NARROW (green until the bridge sends it)
     <div className={`chatbot ${market?.range_3m ? (market.range_3m >= RANGE_WIDE ? "tone-wide" : market.range_3m >= RANGE_NARROW ? "tone-watch" : "tone-narrow") : ""}`} aria-live="polite">
