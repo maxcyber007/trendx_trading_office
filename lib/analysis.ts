@@ -19,7 +19,10 @@ const keyFor = (model: string) => (isGemini(model) ? process.env.GEMINI_API_KEY 
 // every model needs its provider's key on the server
 const keysReady = () => MODELS.length > 0 && MODELS.every((m) => !!keyFor(m));
 const LINES_PER_MODEL = 2;
-const TIMEOUT_MS = 45_000;
+// the first model gets 60 s (the free-tier Flash can be slow when busy), a fallback 45 s; both fit in the ingest function's 120 s
+const TIMEOUT_MS = 60_000, FALLBACK_TIMEOUT_MS = 45_000;
+// when a Gemini model fails, this one answers instead (free-tier quotas are per model, so it doesn't use the main model's quota)
+const GEMINI_FALLBACK = process.env.AI_GEMINI_FALLBACK ?? "gemini-3.5-flash-lite";
 // when to analyse (Thailand time, UTC+7): once per H1 bar at minute REPORT_MINUTE, from START_HOUR up to END_HOUR, i.e.
 // 06:50, 07:50 ... 21:50 = 16 reports a day, inside the Gemini free tier's 20 requests a day.
 const REPORT_MINUTE = 50, START_HOUR = 6, END_HOUR = 22, TH_OFFSET_MS = 7 * 3_600_000;
@@ -79,7 +82,8 @@ export async function analyzeIfDue(m: MarketIn | null | undefined): Promise<void
        RETURNING 1`, [m.symbol, bar, MODELS.join(","), h1 + 3600]);
     // not ours: finished, or another instance is asking; look again in a minute in case that one fails
     if (!claim.rowCount) { hold(m.symbol, bar, 60_000); return; }
-    hold(m.symbol, bar, Infinity);
+    // look again after the retry time even if this run is cut off before it can record a result
+    hold(m.symbol, bar, RETRY_MINUTES * 60_000);
     try {
       // all models at once; one that fails is left out and the others still speak
       const got = await Promise.allSettled(MODELS.map((model) => ask(model, m)));
@@ -188,15 +192,16 @@ const REPLY_SCHEMA = {
 };
 
 let gemini: GoogleGenAI | null = null;
-async function askGemini(model: string, user: string): Promise<unknown> {
-  // no retry: a second try would not fit in the function's 60-second limit; the next slot tries again.
+async function askGemini(model: string, user: string, ms: number): Promise<unknown> {
+  // no SDK retry: the fallback model and the next retry window take over instead.
   // GEMINI_BASE_URL is only for local tests against a stand-in server.
   gemini ??= new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions: {
     timeout: TIMEOUT_MS, retryOptions: { attempts: 1 }, ...(process.env.GEMINI_BASE_URL ? { baseUrl: process.env.GEMINI_BASE_URL } : {}) } });
   const r = await gemini.models.generateContent({
     model, contents: user,
     config: { systemInstruction: SYSTEM, responseMimeType: "application/json", responseJsonSchema: REPLY_SCHEMA,
-      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } },   // a short routine read: low thinking keeps it fast and inside the quota
+      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },   // a short routine read: low thinking keeps it fast and inside the quota
+      abortSignal: AbortSignal.timeout(ms) },
   });
   const text = r.text;
   if (!text) throw new Error(`${model} empty reply (${r.candidates?.[0]?.finishReason ?? "no candidate"})`);
@@ -217,6 +222,18 @@ async function askOllama(model: string, user: string): Promise<unknown> {
 }
 
 async function ask(model: string, m: MarketIn): Promise<ModelView> {
+  const user = prompt(m);
+  try {
+    return await askOnce(model, user, TIMEOUT_MS);
+  } catch (e) {
+    if (!isGemini(model) || !GEMINI_FALLBACK || GEMINI_FALLBACK === model) throw e;
+    console.error("market analysis", model, "failed, trying", GEMINI_FALLBACK, String(e));
+    return await askOnce(GEMINI_FALLBACK, user, FALLBACK_TIMEOUT_MS);
+  }
+}
+
+// the market data every model gets, as the user message
+function prompt(m: MarketIn): string {
   const closed = m.candles.slice(0, -1), now = m.candles[m.candles.length - 1];   // the newest candle is still open
   const bkk = (t: number) => new Date(t * 1000).toLocaleString("en-GB", { timeZone: "Asia/Bangkok", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
   const data = {
@@ -229,8 +246,12 @@ async function ask(model: string, m: MarketIn): Promise<ModelView> {
     volatility_ratio_recent_vs_normal: m.vol_ratio ?? null,
     todays_usd_news_bangkok_time: (m.news ?? []).map((n) => ({ time: bkk(n.t), name: n.name, forecast: n.fc || null, actual: n.act || null })),
   };
-  const user = JSON.stringify(data);
-  const out = (isGemini(model) ? await askGemini(model, user) : isClaude(model) ? await askClaude(model, user) : await askOllama(model, user)) as Record<string, any>;
+  return JSON.stringify(data);
+}
+
+// one model, one try; the answer trimmed to what the page shows
+async function askOnce(model: string, user: string, ms: number): Promise<ModelView> {
+  const out = (isGemini(model) ? await askGemini(model, user, ms) : isClaude(model) ? await askClaude(model, user) : await askOllama(model, user)) as Record<string, any>;
   const lines = (Array.isArray(out.lines) ? out.lines : []).map((s: unknown) => String(s).trim()).filter(Boolean).slice(0, LINES_PER_MODEL).map((s: string) => s.slice(0, 140));
   if (!lines.length) throw new Error(`${model} reply had no lines`);
   const bias = out.bias === "up" ? 1 : out.bias === "down" ? -1 : 0;

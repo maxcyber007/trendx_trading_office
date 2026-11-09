@@ -3,8 +3,8 @@ import { after, NextRequest, NextResponse } from "next/server";
 import { analyzeIfDue } from "@/lib/analysis";
 import { db } from "@/lib/db";
 
-// the hourly market commentary runs after the response, inside this function's time limit
-export const maxDuration = 60;
+// the hourly market commentary runs after the response, inside this function's time limit (a slow model plus its fallback)
+export const maxDuration = 120;
 
 type Deal = { ticket: number; position: number; time: number; symbol: string; type: number; entry: number; magic: number;
   volume: number; price: number; commission: number; swap: number; profit: number; comment: string };
