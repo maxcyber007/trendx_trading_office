@@ -27,6 +27,7 @@ type Data = {
   dd: { dd: number; amount: number; peak: number };
   marks: { t: string; deal_type: number; price: number }[];
   analysis?: Analysis | null;
+  ai_status?: { state: string; error?: string; at?: number };
 };
 type Money = (v: number, plus?: boolean, digits?: number) => string;
 // hourly view from two AI models (lib/analysis.ts): joint direction and signal, then each model's reason; names are not shown
@@ -202,16 +203,21 @@ const prompt = Prompt({ subsets: ["thai", "latin"], weight: ["400", "500"] });
 
 // robot reporter: every minute it says one line about the chart, built from the dashboard's own data (no AI call)
 const BOT_EVERY = 60_000, BOT_SHOW = 9_000, BOT_FIRST = 2_500, BOT_TYPE_MS = 35, BOT_ERASE_MS = 18, BOT_FADE_MS = 600;
-function ChartBot({ market, positions, floating, money, ai }: { market: Market | null | undefined; positions: Position[]; floating: number; money: Money; ai?: Analysis | null }) {
+function ChartBot({ market, positions, floating, money, ai, aiState }: { market: Market | null | undefined; positions: Position[]; floating: number; money: Money; ai?: Analysis | null; aiState?: Data["ai_status"] }) {
   // the AI lines come first: joint signal and direction, then each model's reason and notes
   const aiLines = useMemo(() => {
     const views = ai?.views ?? [];
-    if (!ai || !views.length) return [] as string[];
+    // no analysis yet: say why, so a missing key or a failing model shows on the page
+    const why = aiState?.state === "no_key" ? "AI ยังไม่ทำงาน: ยังไม่ได้ตั้ง OLLAMA_API_KEY บน Vercel หรือยังไม่ได้ Redeploy"
+      : aiState?.state === "no_rows" ? "AI ยังไม่ทำงาน: ยังไม่มีข้อมูลจาก MT5 Service มาเริ่มการวิเคราะห์"
+      : aiState?.state === "error" ? `AI วิเคราะห์ไม่สำเร็จ: ${aiState.error ?? ""}`
+      : aiState?.state === "working" ? "AI กำลังวิเคราะห์ตลาด..." : "";
+    if (!ai || !views.length) return why ? [why] : [];
     const dir = (b: number) => (b > 0 ? "ขาขึ้น" : b < 0 ? "ขาลง" : "ไซด์เวย์");
     const at = new Date(ai.at * 1000).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
     const head = `AI วิเคราะห์ ${at} · สัญญาณ ${ai.signal.toUpperCase()} · ทิศทาง ${dir(ai.bias)} · มั่นใจ ${ai.confidence}%`;
     return [head, ...views.flatMap((v) => [...(v.reason ? [`เหตุผล: ${v.reason}`] : []), ...v.lines])];
-  }, [ai]);
+  }, [ai, aiState?.state, aiState?.error]);
   const lines = useMemo(() => {
     const out: string[] = [...aiLines];
     const c = market?.candles ?? [];
@@ -448,7 +454,7 @@ export default function Dashboard() {
 
         <div className="center">
           <NeuralCore states={states} side={side} />
-          <ChartBot market={state?.market} positions={positions} floating={floating} money={money} ai={data.analysis} />
+          <ChartBot market={state?.market} positions={positions} floating={floating} money={money} ai={data.analysis} aiState={data.ai_status} />
         </div>
 
         <div className="right">

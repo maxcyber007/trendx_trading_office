@@ -81,6 +81,25 @@ export async function analyzeIfDue(m: MarketIn | null | undefined): Promise<void
   }
 }
 
+// why no fresh analysis is showing, for the bubble: no key on the server, nothing has triggered it yet,
+// a request in progress, or the error the newest attempt left (Ollama's message; the key is never in it)
+export type AiStatus = { state: "ok" | "no_key" | "no_rows" | "working" | "error"; error?: string; at?: number };
+export async function aiStatus(symbol: string | undefined): Promise<AiStatus> {
+  if (!process.env.OLLAMA_API_KEY) return { state: "no_key" };
+  if (!symbol) return { state: "no_rows" };
+  try {
+    await table();
+    const [r] = await read<Record<string, any>>(
+      `SELECT results IS NOT NULL done, error, EXTRACT(EPOCH FROM created_at)::float at FROM market_analysis
+       WHERE symbol=$1 ORDER BY created_at DESC LIMIT 1`, [symbol]);
+    if (!r) return { state: "no_rows" };
+    if (r.done) return { state: "ok", at: r.at };
+    return r.error ? { state: "error", error: String(r.error).slice(0, 160), at: r.at } : { state: "working", at: r.at };
+  } catch (e) {
+    return { state: "error", error: String(e).slice(0, 160) };
+  }
+}
+
 // the newest finished commentary for this symbol; a failure here must never stop the dashboard
 export async function latestAnalysis(symbol: string | undefined): Promise<Analysis | null> {
   if (!symbol) return null;
