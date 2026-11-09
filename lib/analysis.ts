@@ -4,9 +4,9 @@ import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { z } from "zod";
 import { db, read } from "./db";
 
-// once per H1 bar (every EVERY seconds while testing) the web asks the AI models, side by side, for a direction, a reason and a
-// buy/sell/wait signal. The bubble reads out the joint view; the joint signal is stored for V.1.39.1 to check later through
-// /api/signal. Nothing here changes a trade by itself.
+// 10 minutes before each H1 bar closes (minute 50, 06:00-22:00 Thailand time) the web asks the AI models, side by side, for a
+// direction, a reason and a buy/sell/wait signal for the next H1 bar. The bubble reads out the joint view; the joint signal is
+// stored for V.1.39.1 to check later through /api/signal. Nothing here changes a trade by itself.
 // AI_MODELS picks the models by name:
 // - "gemini-..." -> Gemini API (GEMINI_API_KEY from Google AI Studio). gemini-3.8-flash on the free tier for now.
 // - "claude-..." -> Claude API (ANTHROPIC_API_KEY), e.g. claude-haiku-5-5
@@ -20,12 +20,19 @@ const keyFor = (model: string) => (isGemini(model) ? process.env.GEMINI_API_KEY 
 const keysReady = () => MODELS.length > 0 && MODELS.every((m) => !!keyFor(m));
 const LINES_PER_MODEL = 2;
 const TIMEOUT_MS = 45_000;
-// a failed or stuck request may be tried again after this long; longer on the Gemini free tier so retries don't eat the daily quota
-const RETRY_MINUTES = MODELS.some(isGemini) ? 30 : 10;
-// how often to analyse: exactly 3600 = once per H1 bar (keyed by the bar), anything else = once per slot of that many seconds.
-// Paid models: every minute while testing (1,440 calls a day each). Gemini free tier allows only 20 requests a day
-// (5 a minute), so with a Gemini model in the list the default is every 90 minutes = 16 a day, leaving room for retries.
-const EVERY = Math.max(60, Number(process.env.AI_EVERY_SECONDS) || (MODELS.some(isGemini) ? 5400 : 60));
+// when to analyse (Thailand time, UTC+7): once per H1 bar at minute REPORT_MINUTE, from START_HOUR up to END_HOUR, i.e.
+// 06:50, 07:50 ... 21:50 = 16 reports a day, inside the Gemini free tier's 20 requests a day.
+const REPORT_MINUTE = 50, START_HOUR = 6, END_HOUR = 22, TH_OFFSET_MS = 7 * 3_600_000;
+// AI_EVERY_SECONDS (testing only) replaces the schedule with one analysis per slot of that many seconds, at any hour
+const EVERY = Number(process.env.AI_EVERY_SECONDS) > 0 ? Math.max(60, Number(process.env.AI_EVERY_SECONDS)) : 0;
+// a failed or stuck request may be tried again after this long: twice more within the 10-minute window on the schedule;
+// longer in test slots on the Gemini free tier so retries don't eat the daily quota
+const RETRY_MINUTES = !EVERY ? 4 : MODELS.some(isGemini) ? 30 : 10;
+// true from minute 50 to the end of each hour between 06:00 and 22:00 Thailand time
+export function inReportWindow(now = Date.now()): boolean {
+  const th = new Date(now + TH_OFFSET_MS);
+  return th.getUTCHours() >= START_HOUR && th.getUTCHours() < END_HOUR && th.getUTCMinutes() >= REPORT_MINUTE;
+}
 
 type Candle = [number, number, number, number, number];
 type News = { t: number; name: string; cur: string; imp: number; act: string; fc: string };
@@ -55,9 +62,11 @@ const hold = (symbol: string, bar: number, ms: number) => wait.set(symbol, { bar
 
 export async function analyzeIfDue(m: MarketIn | null | undefined): Promise<void> {
   if (!keysReady() || !m?.symbol || !Array.isArray(m.candles) || m.candles.length < 25) return;
-  // h1 = the H1 bar now open (broker server time); bar = the key of this analysis: that bar, or the current time slot
+  if (!EVERY && !inReportWindow()) return;
+  // h1 = the H1 bar now open (broker server time); bar = the key of this analysis: that bar, or the test time slot;
+  // the signal is for the next bar, which opens at h1 + 1 hour
   const h1 = m.candles[m.candles.length - 1][0];
-  const bar = EVERY === 3600 ? h1 : Math.floor(Date.now() / 1000 / EVERY) * EVERY;
+  const bar = EVERY ? Math.floor(Date.now() / 1000 / EVERY) * EVERY : h1;
   const w = wait.get(m.symbol);
   if (w && w.bar === bar && Date.now() < w.until) return;
   try {
@@ -67,7 +76,7 @@ export async function analyzeIfDue(m: MarketIn | null | undefined): Promise<void
       `INSERT INTO market_analysis (symbol, bar_time, model, h1_bar) VALUES ($1, $2, $3, $4)
        ON CONFLICT (symbol, bar_time) DO UPDATE SET created_at = now(), error = NULL, model = $3
          WHERE market_analysis.results IS NULL AND market_analysis.created_at < now() - interval '${RETRY_MINUTES} minutes'
-       RETURNING 1`, [m.symbol, bar, MODELS.join(","), h1]);
+       RETURNING 1`, [m.symbol, bar, MODELS.join(","), h1 + 3600]);
     // not ours: finished, or another instance is asking; look again in a minute in case that one fails
     if (!claim.rowCount) { hold(m.symbol, bar, 60_000); return; }
     hold(m.symbol, bar, Infinity);
@@ -135,8 +144,9 @@ export async function latestAnalysis(symbol: string | undefined): Promise<Analys
 
 const SYSTEM = `คุณคือ TRENDX AI AGENTS ผู้วิเคราะห์ทองคำ (XAUUSD) บนกราฟ H1 ให้ระบบเทรดอัตโนมัติที่กำลังทดลอง
 ตอบเป็น JSON เท่านั้น รูปแบบ {"bias":"up"|"down"|"sideways","confidence":0-100,"signal":"buy"|"sell"|"wait","reason":"...","lines":["...","..."]}
+- ข้อมูลถูกส่งมาตอน 10 นาทีก่อนแท่ง H1 ปัจจุบันจะปิด (current_h1_bar_so_far คือแท่งที่ยังไม่ปิด)
 - bias คือทิศทางของราคาในอีกไม่กี่ชั่วโมงข้างหน้า
-- signal คือสัญญาณสำหรับแท่ง H1 ที่เพิ่งเปิด ให้ตอบ wait เมื่อทิศไม่ชัด ตลาดแกว่งในกรอบ หรือใกล้เวลาข่าวสำคัญ
+- signal คือสัญญาณสำหรับแท่ง H1 ถัดไป ให้ตอบ wait เมื่อทิศไม่ชัด ตลาดแกว่งในกรอบ หรือใกล้เวลาข่าวสำคัญ
 - reason เป็นภาษาไทย 1 ประโยค ไม่เกิน 100 ตัวอักษร บอกเหตุผลหลักของ signal
 - lines เป็นภาษาไทย 2 ประโยค ประโยคละไม่เกิน 90 ตัวอักษร เรื่องระดับราคาสำคัญ ความผันผวน หรือข่าวที่ต้องระวัง
 - ใช้เฉพาะตัวเลขจากข้อมูลที่ให้ ห้ามแต่งข้อมูลหรือข่าวเพิ่ม ห้ามพูดถึงขนาดไม้`;
@@ -207,13 +217,14 @@ async function askOllama(model: string, user: string): Promise<unknown> {
 }
 
 async function ask(model: string, m: MarketIn): Promise<ModelView> {
-  const closed = m.candles.slice(0, -1);   // the newest candle has just opened
+  const closed = m.candles.slice(0, -1), now = m.candles[m.candles.length - 1];   // the newest candle is still open
   const bkk = (t: number) => new Date(t * 1000).toLocaleString("en-GB", { timeZone: "Asia/Bangkok", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
   const data = {
     symbol: m.symbol,
     h1_candles_oldest_first: closed.map(([, o, h, l, c]) => [o, h, l, c]),
     candle_format: "[open, high, low, close]",
-    current_price: m.candles[m.candles.length - 1][4],
+    current_h1_bar_so_far: [now[1], now[2], now[3], now[4]],
+    current_price: now[4],
     avg_h1_range_usd: { last_1_month: m.range_1m ?? null, last_3_months: m.range_3m ?? null },
     volatility_ratio_recent_vs_normal: m.vol_ratio ?? null,
     todays_usd_news_bangkok_time: (m.news ?? []).map((n) => ({ time: bkk(n.t), name: n.name, forecast: n.fc || null, actual: n.act || null })),

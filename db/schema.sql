@@ -64,12 +64,12 @@ CREATE TABLE IF NOT EXISTS web_visitors (
   account_id BIGINT
 );
 
--- one AI view per symbol per H1 bar or test time slot (h1_bar = bar open, broker server time); signal is the joint buy / sell / wait
+-- one AI view per symbol per H1 bar or test time slot (h1_bar = open of the H1 bar the signal is for, broker server time); signal is the joint buy / sell / wait
 -- that /api/signal hands to the bridge service; the web app also creates this on first use
 CREATE TABLE IF NOT EXISTS market_analysis (
   symbol      TEXT NOT NULL,
-  bar_time    BIGINT NOT NULL,             -- H1 bar open, or the time slot when analysing more often than hourly
-  h1_bar      BIGINT,                      -- H1 bar open the analysis was made in
+  bar_time    BIGINT NOT NULL,             -- H1 bar open when the analysis ran (minute 50), or a test time slot
+  h1_bar      BIGINT,                      -- open of the next H1 bar, the one the signal is for
   model       TEXT NOT NULL DEFAULT '',
   bias        INT,                         -- 1 up, -1 down, 0 sideways
   confidence  INT,

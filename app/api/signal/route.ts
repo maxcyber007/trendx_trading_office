@@ -11,7 +11,8 @@ const keyOk = (got: string | null) => {
 };
 
 // GET /api/signal?symbol=XAUUSD -> the newest joint AI signal (buy / sell / wait) and the H1 bar it belongs to.
-// bar_time is the bar's open in broker server time, as sent by the bridge, so the EA can match it to its own H1 bar.
+// bar_time is the open of the H1 bar the signal is for (the next bar after the 10-minutes-before-close report),
+// in broker server time as sent by the bridge, so the EA can match it to its own H1 bar.
 export async function GET(req: NextRequest) {
   if (!keyOk(req.headers.get("x-api-key"))) return NextResponse.json({ error: "bad key" }, { status: 401 });
   const symbol = req.nextUrl.searchParams.get("symbol") ?? "";
