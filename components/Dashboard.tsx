@@ -248,13 +248,9 @@ function ChartBot({ market, positions, floating, money, ai, aiState, acc, notes 
     }
     const now = Date.now() / 1000, next = market?.news?.find((n) => n.t > now);
     const hhmm = (t: number) => new Date(t * 1000).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
-    // today's important news: a summary, then each event (its result once released), then the next one due
+    // today's important news in short: how many, then only the next one due (no line per event; the AI lines sum them up)
     const news = market?.news ?? [];
-    out.push(news.length ? `ข่าวสำคัญวันนี้ ${news.length} รายการ · ${news.map((n) => hhmm(n.t)).join(", ")}` : "วันนี้ไม่มีข่าวเศรษฐกิจสำคัญ ตลาดเคลื่อนไหวตามปัจจัยทางเทคนิค");
-    for (const n of news) {
-      if (n.act) out.push(`ผลข่าว ${n.name} (${n.cur}) ออกแล้ว ${n.act}${n.fc ? ` เทียบคาด ${n.fc}` : ""}`);
-      else out.push(`${n.t > now ? "รอข่าว" : "ข่าว"} ${hhmm(n.t)} ${n.name} (${n.cur})${n.fc ? ` · คาดการณ์ ${n.fc}` : ""}`);
-    }
+    out.push(news.length ? `ข่าวสำคัญวันนี้ ${news.length} รายการ` : "วันนี้ไม่มีข่าวเศรษฐกิจสำคัญ ตลาดเคลื่อนไหวตามปัจจัยทางเทคนิค");
     if (news.length) out.push(next ? `ข่าวถัดไป ${hhmm(next.t)} ${next.name} ระวังความผันผวนช่วงประกาศ` : "ข่าวสำคัญของวันนี้ประกาศครบแล้ว");
     const buys = positions.filter((p) => p.type === 0).length, sells = positions.length - buys;
     out.push(positions.length ? `ถือ ${positions.length} ไม้ · BUY ${buys} SELL ${sells} · กำไรลอย ${money(floating, true)}` : "ตอนนี้ไม่มีไม้เปิดอยู่ รอสัญญาณ");
