@@ -56,7 +56,9 @@ const table = () => (ready ??= db().query(
      PRIMARY KEY (symbol, bar_time));
    ALTER TABLE market_analysis ADD COLUMN IF NOT EXISTS signal TEXT;
    ALTER TABLE market_analysis ADD COLUMN IF NOT EXISTS reason TEXT;
-   ALTER TABLE market_analysis ADD COLUMN IF NOT EXISTS h1_bar BIGINT;`,
+   ALTER TABLE market_analysis ADD COLUMN IF NOT EXISTS h1_bar BIGINT;
+   ALTER TABLE market_analysis ADD COLUMN IF NOT EXISTS outcome DOUBLE PRECISION;
+   ALTER TABLE market_analysis ADD COLUMN IF NOT EXISTS hit BOOLEAN;`,
 ).catch((e) => { ready = null; throw e; }));
 
 // when this server instance should look at a symbol's bar again, so the bridge's 2-second sends cost no query
@@ -105,6 +107,46 @@ export async function analyzeIfDue(m: MarketIn | null | undefined): Promise<void
   } catch (e) {
     console.error("market analysis table", String(e));
     hold(m.symbol, bar, 60_000);
+  }
+}
+
+// the accuracy shown on the robot counts the scheduled minute-50 reports from this time on (earlier rows were tests)
+const ACCURACY_FROM = "2026-11-09T05:45:00Z";
+const scored = new Map<string, number>();
+
+// once the H1 bar a signal was for has closed, record its move (close - open) and whether a buy / sell called it right;
+// wait signals and flat bars get no verdict. Runs after the bridge's sends, at most every 5 minutes per symbol and instance.
+export async function scoreSignals(m: MarketIn | null | undefined): Promise<void> {
+  if (!m?.symbol || !Array.isArray(m.candles) || m.candles.length < 2) return;
+  if (Date.now() < (scored.get(m.symbol) ?? 0)) return;
+  scored.set(m.symbol, Date.now() + 5 * 60_000);
+  try {
+    await table();
+    const closed = m.candles.slice(0, -1).map((c) => [c[0], c[1], c[4]]);   // the newest candle is still open
+    await db().query(
+      `UPDATE market_analysis a SET outcome = c.cl - c.o,
+         hit = CASE WHEN a.signal IN ('buy','sell') AND c.cl <> c.o THEN (a.signal = 'buy') = (c.cl > c.o) END
+       FROM (SELECT (x->>0)::bigint t, (x->>1)::float8 o, (x->>2)::float8 cl FROM jsonb_array_elements($2::jsonb) x) c
+       WHERE a.symbol = $1 AND a.outcome IS NULL AND a.results IS NOT NULL AND a.h1_bar = c.t`,
+      [m.symbol, JSON.stringify(closed)]);
+  } catch (e) {
+    console.error("score signals", String(e));
+  }
+}
+
+// share of scored buy / sell signals that called the next H1 bar right (null until there is one)
+export type AiAccuracy = { pct: number; right: number; n: number } | null;
+export async function aiAccuracy(symbol: string | undefined): Promise<AiAccuracy> {
+  if (!symbol) return null;
+  try {
+    await table();
+    const [r] = await read<{ right: number; n: number }>(
+      `SELECT count(*) FILTER (WHERE hit)::int "right", count(hit)::int n FROM market_analysis
+       WHERE symbol = $1 AND created_at >= $2`, [symbol, ACCURACY_FROM]);
+    return r && r.n > 0 ? { pct: Math.round((r.right / r.n) * 100), right: r.right, n: r.n } : null;
+  } catch (e) {
+    console.error("ai accuracy", String(e));
+    return null;
   }
 }
 

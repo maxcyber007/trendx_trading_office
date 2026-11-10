@@ -79,5 +79,7 @@ CREATE TABLE IF NOT EXISTS market_analysis (
   error       TEXT,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   done_at     TIMESTAMPTZ,
+  outcome     DOUBLE PRECISION,            -- move of the h1_bar once it closed (close - open)
+  hit         BOOLEAN,                     -- buy / sell called that move right (NULL for wait or a flat bar)
   PRIMARY KEY (symbol, bar_time)
 );

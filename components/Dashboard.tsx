@@ -28,6 +28,7 @@ type Data = {
   marks: { t: string; deal_type: number; price: number }[];
   analysis?: Analysis | null;
   ai_status?: { state: string; at?: number };
+  ai_accuracy?: { pct: number; right: number; n: number } | null;   // buy / sell signals that called the next H1 bar right
 };
 type Money = (v: number, plus?: boolean, digits?: number) => string;
 // hourly view from two AI models (lib/analysis.ts): joint direction and signal, then each model's reason; names are not shown
@@ -204,7 +205,7 @@ const prompt = Prompt({ subsets: ["thai", "latin"], weight: ["400", "500"] });
 // robot reporter: says its lines one after another without stopping; each is typed, held BOT_HOLD to read, erased,
 // the bubble closes, and the next line opens BOT_GAP later
 const BOT_FIRST = 2_500, BOT_HOLD = 6_000, BOT_GAP = 800, BOT_TYPE_MS = 35, BOT_ERASE_MS = 18, BOT_FADE_MS = 600;
-function ChartBot({ market, positions, floating, money, ai, aiState }: { market: Market | null | undefined; positions: Position[]; floating: number; money: Money; ai?: Analysis | null; aiState?: Data["ai_status"] }) {
+function ChartBot({ market, positions, floating, money, ai, aiState, acc }: { market: Market | null | undefined; positions: Position[]; floating: number; money: Money; ai?: Analysis | null; aiState?: Data["ai_status"]; acc?: Data["ai_accuracy"] }) {
   // the AI lines come first: joint signal and direction, then each model's reason and notes
   const aiLines = useMemo(() => {
     const views = ai?.views ?? [];
@@ -300,6 +301,9 @@ function ChartBot({ market, positions, floating, money, ai, aiState }: { market:
           <ellipse className="arm r" cx="97" cy="94" rx="8.5" ry="17" fill="url(#botShell)" />
           <path d="M31 92c0-16 13-24 29-24s29 8 29 24c0 19-12 32-29 32S31 111 31 92Z" fill="url(#botShell)" />
           <path className="seam" d="M34 100h20l3 3h6l3-3h20" />
+          {/* chest read-out: share of AI buy / sell signals that called the next H1 bar right, whole percent, shown without the % sign */}
+          <rect className="accpanel" x="42" y="82" width="36" height="16" rx="5" fill="url(#botVisor)" />
+          <text className="acc" x="60" y="94.2" textAnchor="middle"><title>{acc ? `AI ทายถูก ${acc.right} จาก ${acc.n} สัญญาณ` : "ยังไม่มีสัญญาณที่ปิดแท่งแล้ว"}</title>{acc ? String(acc.pct) : "--"}</text>
           <rect x="45" y="12" width="30" height="12" rx="6" fill="url(#botShell)" />
           <rect x="9" y="38" width="11" height="24" rx="5.5" fill="url(#botShell)" />
           <rect x="100" y="38" width="11" height="24" rx="5.5" fill="url(#botShell)" />
@@ -460,7 +464,7 @@ export default function Dashboard() {
 
         <div className="center">
           <NeuralCore states={states} side={side} />
-          <ChartBot market={state?.market} positions={positions} floating={floating} money={money} ai={data.analysis} aiState={data.ai_status} />
+          <ChartBot market={state?.market} positions={positions} floating={floating} money={money} ai={data.analysis} aiState={data.ai_status} acc={data.ai_accuracy} />
         </div>
 
         <div className="right">

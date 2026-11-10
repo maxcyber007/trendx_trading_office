@@ -448,6 +448,11 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .chatbot .bot .arm.l { animation: armL 3.2s ease-in-out infinite; } .chatbot .bot .arm.r { animation: armR 3.2s ease-in-out infinite; }
 .chatbot .bot .seam { fill: none; stroke: #a9b2bf; stroke-width: 1.2; stroke-linejoin: round; }
 .chatbot .bot .sheen { fill: #ffffff; opacity: .07; }
+/* AI accuracy on the chest: neon green, its glow swelling and fading */
+.chatbot .bot .accpanel { stroke: rgba(57, 255, 106, .35); stroke-width: .8; }
+.chatbot .bot .acc { fill: #39ff6a; font-family: "Segoe UI", Arial, sans-serif; font-size: 12px; font-weight: 800; letter-spacing: .03em; animation: accGlow 1.4s ease-in-out infinite alternate; }
+@keyframes accGlow { from { opacity: .7; filter: drop-shadow(0 0 1px rgba(57, 255, 106, .6)); } to { opacity: 1; filter: drop-shadow(0 0 4px #39ff6a) drop-shadow(0 0 8px rgba(57, 255, 106, .8)); } }
+@media (prefers-reduced-motion: reduce) { .chatbot .bot .acc { animation: none; filter: drop-shadow(0 0 3px #39ff6a); } }
 .chatbot { --eye: #6dff94; --eyeGlow: #39ff6a; }   /* neon green until the bridge sends the H1 range */
 .chatbot.tone-wide { --eye: #6dff94; --eyeGlow: #39ff6a; } .chatbot.tone-watch { --eye: #ffe066; --eyeGlow: #ffc94a; } .chatbot.tone-narrow { --eye: #ff6b7a; --eyeGlow: #ff4d5e; }
 .chatbot .bot .eye { fill: none; stroke: var(--eye); stroke-width: 5; stroke-linecap: round; filter: drop-shadow(0 0 3px var(--eyeGlow)); transition: stroke .6s; }
