@@ -205,6 +205,8 @@ const prompt = Prompt({ subsets: ["thai", "latin"], weight: ["400", "500"] });
 // robot reporter: says its lines one after another without stopping; each is typed, held BOT_HOLD to read, erased,
 // the bubble closes, and the next line opens BOT_GAP later
 const BOT_FIRST = 2_500, BOT_HOLD = 6_000, BOT_GAP = 800, BOT_TYPE_MS = 35, BOT_ERASE_MS = 18, BOT_FADE_MS = 600;
+// pointing at (or touching) the robot or its bubble keeps the bubble up; after letting go it stays BOT_RELEASE longer
+const BOT_RELEASE = 1_500;
 function ChartBot({ market, positions, floating, money, ai, aiState, acc }: { market: Market | null | undefined; positions: Position[]; floating: number; money: Money; ai?: Analysis | null; aiState?: Data["ai_status"]; acc?: Data["ai_accuracy"] }) {
   // the AI lines come first: joint signal and direction, then each model's reason and notes
   const aiLines = useMemo(() => {
@@ -253,12 +255,21 @@ function ChartBot({ market, positions, floating, money, ai, aiState, acc }: { ma
   const [shown, setShown] = useState(-1);   // how many lines have been said so far (picks the line), -1 = bubble hidden
   const [erasing, setErasing] = useState(false);
   const said = useRef(0);
-  // bubble closed: open the next line (the first one waits BOT_FIRST after the page loads)
+  // held = a mouse over, or a finger on, the robot or the bubble: the line stays (a hidden bubble opens at once, a line
+  // being erased types itself back); moving between the two parts is bridged by a short delay before letting go
+  const [held, setHeld] = useState(false);
+  const letGo = useRef(0), released = useRef(false);
+  const hold = () => { clearTimeout(letGo.current); setHeld(true); };
+  const release = () => { clearTimeout(letGo.current); letGo.current = window.setTimeout(() => { released.current = true; setHeld(false); }, 150); };
+  useEffect(() => () => clearTimeout(letGo.current), []);
+  const holdProps = { onPointerEnter: hold, onPointerLeave: release, onPointerCancel: release };
+  // bubble closed: open the next line (the first one waits BOT_FIRST after the page loads; at once while held)
   useEffect(() => {
     if (shown >= 0) return;
-    const t = window.setTimeout(() => { setErasing(false); setShown(said.current++); }, said.current ? BOT_GAP : BOT_FIRST);
+    const t = window.setTimeout(() => { setErasing(false); released.current = false; setShown(said.current++); }, held ? 0 : said.current ? BOT_GAP : BOT_FIRST);
     return () => clearTimeout(t);
-  }, [shown]);
+  }, [shown, held]);
+  useEffect(() => { if (held && erasing) setErasing(false); }, [held, erasing]);
   const text = shown >= 0 ? lines[shown % lines.length] : "";
   const chars = useMemo(() => Array.from(text), [text]);
   const len = useRef(0);
@@ -281,17 +292,17 @@ function ChartBot({ market, positions, floating, money, ai, aiState, acc }: { ma
     return () => clearTimeout(t);
   }, [closing]);
   const done = !erasing && typed >= chars.length;
-  // fully typed: hold it to read, then start deleting it like backspace
+  // fully typed: hold it to read (as long as it is held, then BOT_RELEASE), then start deleting it like backspace
   useEffect(() => {
-    if (!done || shown < 0) return;
-    const t = window.setTimeout(() => setErasing(true), BOT_HOLD);
+    if (!done || shown < 0 || held) return;
+    const t = window.setTimeout(() => setErasing(true), released.current ? BOT_RELEASE : BOT_HOLD);
     return () => clearTimeout(t);
-  }, [done, shown]);
+  }, [done, shown, held]);
   return (
     // eye and mouth colour follow the 3-month H1 range: green WIDE, yellow WATCH, red NARROW (green until the bridge sends it)
     <div className={`chatbot ${market?.range_3m ? (market.range_3m >= RANGE_WIDE ? "tone-wide" : market.range_3m >= RANGE_NARROW ? "tone-watch" : "tone-narrow") : ""}`} aria-live="polite">
-      {text && <p key={shown} className={`bubble ${prompt.className}${closing ? " closing" : ""}`}><small><i className="botdot" aria-hidden="true" />TRENDX AI AGENTS</small><span className="sr-only">{text}</span><span className="tw" aria-hidden="true"><span className="ghost">{text}</span><span>{chars.slice(0, typed).join("")}{!done && <i className="caret" />}</span></span></p>}
-      <svg className="bot" viewBox="0 0 120 142" width="96" height="114" aria-hidden="true">
+      {text && <p key={shown} className={`bubble ${prompt.className}${closing ? " closing" : ""}`} {...holdProps}><small><i className="botdot" aria-hidden="true" />TRENDX AI AGENTS</small><span className="sr-only">{text}</span><span className="tw" aria-hidden="true"><span className="ghost">{text}</span><span>{chars.slice(0, typed).join("")}{!done && <i className="caret" />}</span></span></p>}
+      <svg className="bot" viewBox="0 0 120 142" width="96" height="114" aria-hidden="true" {...holdProps}>
         <defs>
           <linearGradient id="botShell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffffff" /><stop offset=".55" stopColor="#e7ebf1" /><stop offset="1" stopColor="#b9c1cd" /></linearGradient>
           <linearGradient id="botVisor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#24364a" /><stop offset="1" stopColor="#0b141f" /></linearGradient>
