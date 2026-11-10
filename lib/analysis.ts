@@ -41,7 +41,8 @@ type Candle = [number, number, number, number, number];
 type News = { t: number; name: string; cur: string; imp: number; act: string; fc: string };
 export type MarketIn = { symbol: string; candles: Candle[]; vol_ratio?: number; range_1m?: number; range_3m?: number; news?: News[] };
 export type Signal = "buy" | "sell" | "wait";
-export type ModelView = { model: string; bias: number; confidence: number; signal: Signal; reason: string; lines: string[] };
+// news: a one-sentence read of today's USD calendar (results against forecasts, what is still due) and what it means for gold
+export type ModelView = { model: string; bias: number; confidence: number; signal: Signal; reason: string; lines: string[]; news?: string };
 // the joint view: the shared direction when every model agrees, otherwise sideways at half the confidence;
 // the signal is buy or sell only when every configured model answered and gave that same signal, otherwise wait
 export type Analysis = { bar: number; bias: number; confidence: number; signal: Signal; agree: boolean; views: ModelView[]; at: number };
@@ -189,12 +190,13 @@ export async function latestAnalysis(symbol: string | undefined): Promise<Analys
 }
 
 const SYSTEM = `คุณคือ TRENDX AI AGENTS ผู้วิเคราะห์ทองคำ (XAUUSD) บนกราฟ H1 ให้ระบบเทรดอัตโนมัติที่กำลังทดลอง
-ตอบเป็น JSON เท่านั้น รูปแบบ {"bias":"up"|"down"|"sideways","confidence":0-100,"signal":"buy"|"sell"|"wait","reason":"...","lines":["...","..."]}
+ตอบเป็น JSON เท่านั้น รูปแบบ {"bias":"up"|"down"|"sideways","confidence":0-100,"signal":"buy"|"sell"|"wait","reason":"...","lines":["...","..."],"news":"..."}
 - ข้อมูลถูกส่งมาตอน 10 นาทีก่อนแท่ง H1 ปัจจุบันจะปิด (current_h1_bar_so_far คือแท่งที่ยังไม่ปิด)
 - bias คือทิศทางของราคาในอีกไม่กี่ชั่วโมงข้างหน้า
 - signal คือสัญญาณสำหรับแท่ง H1 ถัดไป ให้ตอบ wait เมื่อทิศไม่ชัด ตลาดแกว่งในกรอบ หรือใกล้เวลาข่าวสำคัญ
 - reason เป็นภาษาไทย 1 ประโยค ไม่เกิน 100 ตัวอักษร บอกเหตุผลหลักของ signal
 - lines เป็นภาษาไทย 2 ประโยค ประโยคละไม่เกิน 90 ตัวอักษร เรื่องระดับราคาสำคัญ ความผันผวน หรือข่าวที่ต้องระวัง
+- news เป็นภาษาไทย 1 ประโยค ไม่เกิน 120 ตัวอักษร สรุปข่าว USD วันนี้จาก todays_usd_news_bangkok_time: ข่าวที่ออกแล้วดีหรือแย่กว่าคาดการณ์ (actual เทียบ forecast) หรือข่าวสำคัญที่ยังรอออก และผลที่น่าจะเกิดกับทิศทางทองคำ (ตัวเลขสหรัฐฯ ดีกว่าคาดมักกดดันทอง แย่กว่าคาดมักหนุนทอง) ถ้าไม่มีข่าวให้บอกว่าวันนี้ไม่มีข่าวสำคัญ
 - ใช้เฉพาะตัวเลขจากข้อมูลที่ให้ ห้ามแต่งข้อมูลหรือข่าวเพิ่ม ห้ามพูดถึงขนาดไม้`;
 
 // the reply every model gives; Claude is held to it by structured output, Ollama by the prompt and JSON mode
@@ -204,6 +206,7 @@ const Reply = z.object({
   signal: z.enum(["buy", "sell", "wait"]),
   reason: z.string(),
   lines: z.array(z.string()),
+  news: z.string(),
 });
 
 let claude: Anthropic | null = null;
@@ -229,8 +232,9 @@ const REPLY_SCHEMA = {
     signal: { type: "string", enum: ["buy", "sell", "wait"] },
     reason: { type: "string" },
     lines: { type: "array", items: { type: "string" } },
+    news: { type: "string" },
   },
-  required: ["bias", "confidence", "signal", "reason", "lines"],
+  required: ["bias", "confidence", "signal", "reason", "lines", "news"],
 };
 
 let gemini: GoogleGenAI | null = null;
@@ -300,7 +304,8 @@ async function askOnce(model: string, user: string, ms: number): Promise<ModelVi
   const confidence = Math.max(0, Math.min(100, Math.round(Number(out.confidence) || 0)));
   const signal: Signal = out.signal === "buy" || out.signal === "sell" ? out.signal : "wait";
   const reason = String(out.reason ?? "").trim().slice(0, 160);
-  return { model, bias, confidence, signal, reason, lines };
+  const news = String(out.news ?? "").trim().slice(0, 180);
+  return { model, bias, confidence, signal, reason, lines, news };
 }
 
 // the newest joint signal for the bridge service, which can pass it on to the EA through a file (the EA never calls the web)

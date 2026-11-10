@@ -32,7 +32,7 @@ type Data = {
 };
 type Money = (v: number, plus?: boolean, digits?: number) => string;
 // hourly view from two AI models (lib/analysis.ts): joint direction and signal, then each model's reason; names are not shown
-type ModelView = { bias: number; confidence: number; signal: string; reason: string; lines: string[] };
+type ModelView = { bias: number; confidence: number; signal: string; reason: string; lines: string[]; news?: string };
 type Analysis = { bar: number; bias: number; confidence: number; signal: string; agree: boolean; views: ModelView[]; at: number };
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -217,7 +217,9 @@ function ChartBot({ market, positions, floating, money, ai, aiState, acc }: { ma
     const dir = (b: number) => (b > 0 ? "ขาขึ้น" : b < 0 ? "ขาลง" : "ไซด์เวย์");
     const at = new Date(ai.at * 1000).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
     const head = `AI วิเคราะห์ ${at} · สัญญาณ ${ai.signal.toUpperCase()} · ทิศทาง ${dir(ai.bias)} · มั่นใจ ${ai.confidence}%`;
-    return [head, ...views.flatMap((v) => [...(v.reason ? [`เหตุผล: ${v.reason}`] : []), ...v.lines])];
+    // the news read once (from the first model that gave one), right after the headline
+    const news = views.find((v) => v.news)?.news;
+    return [head, ...(news ? [`ข่าว: ${news}`] : []), ...views.flatMap((v) => [...(v.reason ? [`เหตุผล: ${v.reason}`] : []), ...v.lines])];
   }, [ai, aiState?.state]);
   const lines = useMemo(() => {
     const out: string[] = [...aiLines];
