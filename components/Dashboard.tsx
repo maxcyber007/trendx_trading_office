@@ -29,6 +29,8 @@ type Data = {
   analysis?: Analysis | null;
   ai_status?: { state: string; at?: number };
   ai_accuracy?: { pct: number; right: number; n: number } | null;   // buy / sell signals that called the next H1 bar right
+  // light-model notes (lib/notes.ts): the 5-minute M5 read and the read ~20 minutes before an important USD release
+  ai_notes?: { m5: { bias: number; summary: string; level: string; at: number } | null; news: { t: number; names: string[]; better: string; worse: string; watch: string; at: number } | null };
 };
 type Money = (v: number, plus?: boolean, digits?: number) => string;
 // hourly view from two AI models (lib/analysis.ts): joint direction and signal, then each model's reason; names are not shown
@@ -207,7 +209,7 @@ const prompt = Prompt({ subsets: ["thai", "latin"], weight: ["400", "500"] });
 const BOT_FIRST = 2_500, BOT_HOLD = 6_000, BOT_GAP = 800, BOT_TYPE_MS = 35, BOT_ERASE_MS = 18, BOT_FADE_MS = 600;
 // pointing at (or touching) the robot or its bubble keeps the bubble up; after letting go it stays BOT_RELEASE longer
 const BOT_RELEASE = 1_500;
-function ChartBot({ market, positions, floating, money, ai, aiState, acc }: { market: Market | null | undefined; positions: Position[]; floating: number; money: Money; ai?: Analysis | null; aiState?: Data["ai_status"]; acc?: Data["ai_accuracy"] }) {
+function ChartBot({ market, positions, floating, money, ai, aiState, acc, notes }: { market: Market | null | undefined; positions: Position[]; floating: number; money: Money; ai?: Analysis | null; aiState?: Data["ai_status"]; acc?: Data["ai_accuracy"]; notes?: Data["ai_notes"] }) {
   // the AI lines come first: joint signal and direction, then each model's reason and notes
   const aiLines = useMemo(() => {
     const views = ai?.views ?? [];
@@ -215,14 +217,20 @@ function ChartBot({ market, positions, floating, money, ai, aiState, acc }: { ma
     const why = aiState?.state === "no_key" || aiState?.state === "error" ? "AI AGENTS CONNECTING..."
       : aiState?.state === "no_rows" ? "AI ยังไม่ทำงาน: ยังไม่มีข้อมูลจาก MT5 Service มาเริ่มการวิเคราะห์"
       : aiState?.state === "working" ? "AI กำลังวิเคราะห์ตลาด..." : "";
-    if (!ai || !views.length) return why ? [why] : [];
     const dir = (b: number) => (b > 0 ? "ขาขึ้น" : b < 0 ? "ขาลง" : "ไซด์เวย์");
-    const at = new Date(ai.at * 1000).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
-    const head = `AI วิเคราะห์ ${at} · สัญญาณ ${ai.signal.toUpperCase()} · ทิศทาง ${dir(ai.bias)} · มั่นใจ ${ai.confidence}%`;
+    const hm = (t: number) => new Date(t * 1000).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
+    // a release coming up comes first: what a better or worse number would likely do to gold
+    const pre = notes?.news;
+    const preLines = pre ? [`ก่อนข่าว ${hm(pre.t)}${pre.names.length ? ` ${pre.names.join(", ")}` : ""}: ถ้าออกดีกว่าคาด ${pre.better}`, `ถ้าออกแย่กว่าคาด ${pre.worse}`, ...(pre.watch ? [`ระวัง: ${pre.watch}`] : [])] : [];
+    // the 5-minute read of the M5 bars
+    const q = notes?.m5;
+    const quick = q ? [`AI 5 นาที ${hm(q.at)} · ${dir(q.bias)}: ${q.summary}`, ...(q.level ? [`จับตา: ${q.level}`] : [])] : [];
+    if (!ai || !views.length) return [...preLines, ...(why ? [why] : []), ...quick];
+    const head = `AI วิเคราะห์ ${hm(ai.at)} · สัญญาณ ${ai.signal.toUpperCase()} · ทิศทาง ${dir(ai.bias)} · มั่นใจ ${ai.confidence}%`;
     // the news read once (from the first model that gave one), right after the headline
     const news = views.find((v) => v.news)?.news;
-    return [head, ...(news ? [`ข่าว: ${news}`] : []), ...views.flatMap((v) => [...(v.reason ? [`เหตุผล: ${v.reason}`] : []), ...v.lines])];
-  }, [ai, aiState?.state]);
+    return [...preLines, head, ...(news ? [`ข่าว: ${news}`] : []), ...quick, ...views.flatMap((v) => [...(v.reason ? [`เหตุผล: ${v.reason}`] : []), ...v.lines])];
+  }, [ai, aiState?.state, notes]);
   const lines = useMemo(() => {
     const out: string[] = [...aiLines];
     const c = market?.candles ?? [];
@@ -477,7 +485,7 @@ export default function Dashboard() {
 
         <div className="center">
           <NeuralCore states={states} side={side} />
-          <ChartBot market={state?.market} positions={positions} floating={floating} money={money} ai={data.analysis} aiState={data.ai_status} acc={data.ai_accuracy} />
+          <ChartBot market={state?.market} positions={positions} floating={floating} money={money} ai={data.analysis} aiState={data.ai_status} acc={data.ai_accuracy} notes={data.ai_notes} />
         </div>
 
         <div className="right">

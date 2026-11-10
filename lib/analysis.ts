@@ -39,7 +39,7 @@ export function inReportWindow(now = Date.now()): boolean {
 
 type Candle = [number, number, number, number, number];
 type News = { t: number; name: string; cur: string; imp: number; act: string; fc: string };
-export type MarketIn = { symbol: string; candles: Candle[]; vol_ratio?: number; range_1m?: number; range_3m?: number; news?: News[] };
+export type MarketIn = { symbol: string; candles: Candle[]; m5?: Candle[]; vol_ratio?: number; range_1m?: number; range_3m?: number; news?: News[] };
 export type Signal = "buy" | "sell" | "wait";
 // news: a one-sentence read of today's USD calendar (results against forecasts, what is still due) and what it means for gold
 export type ModelView = { model: string; bias: number; confidence: number; signal: Signal; reason: string; lines: string[]; news?: string };
