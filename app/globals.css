@@ -336,7 +336,8 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .center { position: relative; overflow: hidden; perspective: 1500px; }
 .center::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(120, 255, 200, .05) 0 1px, transparent 1px 4px); -webkit-mask: radial-gradient(75% 75% at 62% 54%, #000 30%, transparent); mask: radial-gradient(75% 75% at 62% 54%, #000 30%, transparent); }
 .net { transform: rotateX(calc(3deg + var(--rx, 0deg))) rotateY(var(--ry, 0deg)) scale(.97); transform-origin: 50% 55%; transition: transform .3s ease-out; animation: holoFlicker 7s steps(1) infinite; }
-.net text.title { font-family: var(--font-title), "Segoe UI", sans-serif; font-size: 23.25px; letter-spacing: .07em; stroke: rgba(57, 255, 106, .8); stroke-width: .7; filter: drop-shadow(0 0 8px rgba(57, 255, 106, .7)); animation: holoGlitch 8s steps(1) infinite, titleBreath 3.2s ease-in-out infinite; }
+/* the drawn title lettering: solid white strokes with round ends (stroke width in glyph units, 14 = cap height) */
+.net .title { fill: none; stroke: #ffffff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; animation: holoGlitch 8s steps(1) infinite; }
 .titleline { transform-box: fill-box; transform-origin: center; animation: titleLine 5s ease-in-out infinite; }
 .titlegem { fill: #020a06; stroke: var(--neon); stroke-width: 1.4; filter: drop-shadow(0 0 4px var(--neon)); transform-box: fill-box; transform-origin: center; animation: titleGem 5s ease-in-out infinite; }
 .edges path { stroke: #2bd08a; }
@@ -366,7 +367,6 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .focus { fill: #d6ffe9; font-size: 15px; font-weight: 700; letter-spacing: .04em; }
 @keyframes holoFlicker { 0%, 100% { opacity: 1; } 91% { opacity: .9; } 92% { opacity: 1; } 95% { opacity: .84; } 96% { opacity: 1; } }
 @keyframes holoGlitch { 0%, 100% { transform: none; } 88% { transform: translateX(3px) skewX(-8deg); } 89% { transform: translateX(-2px); } 90% { transform: none; } }
-@keyframes titleBreath { 0%, 100% { opacity: .78; } 50% { opacity: 1; } }
 @keyframes titleLine { 0%, 100% { transform: scaleX(.55); opacity: .55; } 50% { transform: scaleX(1); opacity: 1; } }
 @keyframes titleGem { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(180deg); } }
 @media (prefers-reduced-motion: reduce) { .sparks, .spark .ball { display: none; } *, *::before, *::after { animation: none !important; transition: none !important; } }

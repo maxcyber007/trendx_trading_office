@@ -1,8 +1,9 @@
 import { useEffect, useRef } from "react";
-import { Audiowide } from "next/font/google";
+import { CAP, lettering } from "./titleGlyphs";
 import { FAMILIES, MODEL_FAMILIES, MODEL_NAMES, modelCode } from "@/lib/models";
 
-const space = Audiowide({ subsets: ["latin"], weight: "400", variable: "--font-title" });
+// the title as drawn lettering (titleGlyphs.ts): white, wide, round-ended strokes, 18 units tall with its top at y = 22
+const TITLE = lettering("TRENDX VIRTUAL AI COMMAND CORE"), TITLE_S = 18 / CAP;
 
 const W = 910, H = 860, IN_W = 172, BALL = { x: 468, y: 452, r: 292 }, CORE_R = 56, TILT = .34, SPEED = .22;
 // the ball also nods up and down, so all 39 models get their turn at the front centre
@@ -171,7 +172,7 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
   };
 
   return (
-    <svg className={`net ${space.variable}`} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="TrendX neural core: 39 models on a turning ball" onPointerMove={point} onPointerLeave={(e) => { hover.current = -1; rest(e); }}>
+    <svg className="net" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="TrendX neural core: 39 models on a turning ball" onPointerMove={point} onPointerLeave={(e) => { hover.current = -1; rest(e); }}>
       <defs>
         <radialGradient id="brainGlow"><stop offset="0" stopColor="#39ff6a" stopOpacity=".35" /><stop offset=".55" stopColor="#39ff6a" stopOpacity=".1" /><stop offset="1" stopColor="#39ff6a" stopOpacity="0" /></radialGradient>
         <radialGradient id="coreGlow">
@@ -179,15 +180,6 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
           <stop offset=".5" stopColor="#00c853" stopOpacity=".12" />
           <stop offset="1" stopColor="#00c853" stopOpacity="0" />
         </radialGradient>
-        <linearGradient id="titleGlow" gradientUnits="userSpaceOnUse" x1="-260" y1="0" x2="60" y2="0">
-          <stop offset="0" stopColor="#39ff6a" stopOpacity=".75" />
-          <stop offset=".42" stopColor="#39ff6a" stopOpacity=".75" />
-          <stop offset=".5" stopColor="#c9ffdb" stopOpacity=".95" />
-          <stop offset=".58" stopColor="#39ff6a" stopOpacity=".75" />
-          <stop offset="1" stopColor="#39ff6a" stopOpacity=".75" />
-          <animate attributeName="x1" values="-260;760;760" keyTimes="0;.55;1" dur="5s" repeatCount="indefinite" />
-          <animate attributeName="x2" values="60;1080;1080" keyTimes="0;.55;1" dur="5s" repeatCount="indefinite" />
-        </linearGradient>
         <linearGradient id="titleLine">
           <stop offset="0" stopColor="#39ff6a" stopOpacity="0" />
           <stop offset=".5" stopColor="#eafff0" />
@@ -195,7 +187,7 @@ export default function NeuralCore({ states, side }: { states: Map<number, numbe
         </linearGradient>
       </defs>
       <circle className="coreglow" cx={BALL.x} cy={BALL.y} r={BALL.r + 40} fill="url(#coreGlow)" />
-      <text className="title" x={BALL.x} y="40" textAnchor="middle" fill="url(#titleGlow)">TRENDX VIRTUAL AI COMMAND CORE</text>
+      <g transform={`translate(${BALL.x - (TITLE.w * TITLE_S) / 2} 22) scale(${TITLE_S})`}><path className="title" d={TITLE.d} /></g>
       <rect className="titleline" x={BALL.x - 190} y="49" width="380" height="1.6" fill="url(#titleLine)" />
       <path className="titlegem" d={`M${BALL.x} 45l5 5-5 5-5-5Z`} />
       <text ref={focus} className="focus" x={BALL.x} y={BALL.y - BALL.r - 34} textAnchor="middle" />
