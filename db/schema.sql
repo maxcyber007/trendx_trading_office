@@ -81,5 +81,10 @@ CREATE TABLE IF NOT EXISTS market_analysis (
   done_at     TIMESTAMPTZ,
   outcome     DOUBLE PRECISION,            -- move of the h1_bar once it closed (close - open)
   hit         BOOLEAN,                     -- buy / sell called that move right (NULL for wait or a flat bar)
+  entry       DOUBLE PRECISION,            -- proposed levels of a buy / sell, kept only when they pass the checks
+  tp          DOUBLE PRECISION,
+  sl          DOUBLE PRECISION,
+  trade_result TEXT,                       -- on the h1_bar: nofill, sl, tp or close
+  trade_r     DOUBLE PRECISION,            -- result in R (1 R = the stop distance)
   PRIMARY KEY (symbol, bar_time)
 );

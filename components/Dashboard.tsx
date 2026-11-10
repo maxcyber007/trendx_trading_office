@@ -35,7 +35,7 @@ type Data = {
 type Money = (v: number, plus?: boolean, digits?: number) => string;
 // hourly view from two AI models (lib/analysis.ts): joint direction and signal, then each model's reason; names are not shown
 type ModelView = { bias: number; confidence: number; signal: string; reason: string; lines: string[]; news?: string };
-type Analysis = { bar: number; bias: number; confidence: number; signal: string; agree: boolean; views: ModelView[]; at: number };
+type Analysis = { bar: number; bias: number; confidence: number; signal: string; agree: boolean; views: ModelView[]; at: number; trade?: { entry: number; tp: number; sl: number } | null };
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 // developer profile links shown on the DEVELOPED BY card; empty = the button shows but does not open anything yet
@@ -229,7 +229,10 @@ function ChartBot({ market, positions, floating, money, ai, aiState, acc, notes 
     const head = `AI วิเคราะห์ ${hm(ai.at)} · สัญญาณ ${ai.signal.toUpperCase()} · ทิศทาง ${dir(ai.bias)} · มั่นใจ ${ai.confidence}%`;
     // the news read once (from the first model that gave one), right after the headline
     const news = views.find((v) => v.news)?.news;
-    return [...preLines, head, ...(news ? [`ข่าว: ${news}`] : []), ...quick, ...views.flatMap((v) => [...(v.reason ? [`เหตุผล: ${v.reason}`] : []), ...v.lines])];
+    // the proposed levels of a buy / sell (recorded and measured, not traded)
+    const px = (v: number) => v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const lvl = ai.trade && ai.signal !== "wait" ? [`${ai.signal.toUpperCase()} เข้า ${px(ai.trade.entry)} · TP ${px(ai.trade.tp)} · SL ${px(ai.trade.sl)}`] : [];
+    return [...preLines, head, ...lvl, ...(news ? [`ข่าว: ${news}`] : []), ...quick, ...views.flatMap((v) => [...(v.reason ? [`เหตุผล: ${v.reason}`] : []), ...v.lines])];
   }, [ai, aiState?.state, notes]);
   const lines = useMemo(() => {
     const out: string[] = [...aiLines];
