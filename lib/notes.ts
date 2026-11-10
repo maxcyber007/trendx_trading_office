@@ -3,13 +3,13 @@ import type { MarketIn } from "./analysis";
 import { db, read } from "./db";
 
 // Short AI notes beside the hourly signal, on the light Gemini model (its own free-tier quota, 500 requests a day):
-// - "m5":   every 5 minutes from 06:00 to 22:00 Thailand time, a one-line read of the last 3 hours of M5 bars (192 a day)
+// - "m5":   every 5 minutes from 06:00 to 23:00 Thailand time, a one-line read of the last 3 hours of M5 bars (204 a day)
 // - "news": about 20 minutes before each important USD release, what a better or worse number would likely do to gold
 // They are commentary only: no buy / sell signal, nothing for /api/signal, not counted in the accuracy on the robot.
 // A note that fails is not retried (the next slot comes soon), so the quota stays predictable.
 const MODEL = process.env.AI_QUICK_MODEL || "gemini-3.5-flash-lite";
 const TIMEOUT_MS = 40_000;
-const START_HOUR = 6, END_HOUR = 22, TH_OFFSET_MS = 7 * 3_600_000, SLOT = 300;
+const START_HOUR = 6, END_HOUR = 23, TH_OFFSET_MS = 7 * 3_600_000, SLOT = 300;
 const NEWS_FROM = 21 * 60, NEWS_TO = 5 * 60;   // a pre-news note is asked 21 to 5 minutes before the release (normally ~20)
 
 type Candle = [number, number, number, number, number];

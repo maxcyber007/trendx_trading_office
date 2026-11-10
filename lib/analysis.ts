@@ -4,7 +4,7 @@ import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { z } from "zod";
 import { db, read } from "./db";
 
-// 10 minutes before each H1 bar closes (minute 50, 06:00-22:00 Thailand time) the web asks the AI models, side by side, for a
+// 10 minutes before each H1 bar closes (minute 50, 06:00-23:00 Thailand time) the web asks the AI models, side by side, for a
 // direction, a reason and a buy/sell/wait signal for the next H1 bar. The bubble reads out the joint view; the joint signal is
 // stored for V.1.39.1 to check later through /api/signal. Nothing here changes a trade by itself.
 // AI_MODELS picks the models by name:
@@ -24,14 +24,14 @@ const TIMEOUT_MS = 60_000, FALLBACK_TIMEOUT_MS = 45_000;
 // when a Gemini model fails, this one answers instead (free-tier quotas are per model, so it doesn't use the main model's quota)
 const GEMINI_FALLBACK = process.env.AI_GEMINI_FALLBACK ?? "gemini-3.5-flash-lite";
 // when to analyse (Thailand time, UTC+7): once per H1 bar at minute REPORT_MINUTE, from START_HOUR up to END_HOUR, i.e.
-// 06:50, 07:50 ... 21:50 = 16 reports a day, inside the Gemini free tier's 20 requests a day.
-const REPORT_MINUTE = 50, START_HOUR = 6, END_HOUR = 22, TH_OFFSET_MS = 7 * 3_600_000;
+// 06:50, 07:50 ... 22:50 = 17 reports a day, inside the Gemini free tier's 20 requests a day (3 left for retries).
+const REPORT_MINUTE = 50, START_HOUR = 6, END_HOUR = 23, TH_OFFSET_MS = 7 * 3_600_000;
 // AI_EVERY_SECONDS (testing only) replaces the schedule with one analysis per slot of that many seconds, at any hour
 const EVERY = Number(process.env.AI_EVERY_SECONDS) > 0 ? Math.max(60, Number(process.env.AI_EVERY_SECONDS)) : 0;
 // a failed or stuck request may be tried again after this long: twice more within the 10-minute window on the schedule;
 // longer in test slots on the Gemini free tier so retries don't eat the daily quota
 const RETRY_MINUTES = !EVERY ? 4 : MODELS.some(isGemini) ? 30 : 10;
-// true from minute 50 to the end of each hour between 06:00 and 22:00 Thailand time
+// true from minute 50 to the end of each hour between 06:00 and 23:00 Thailand time
 export function inReportWindow(now = Date.now()): boolean {
   const th = new Date(now + TH_OFFSET_MS);
   return th.getUTCHours() >= START_HOUR && th.getUTCHours() < END_HOUR && th.getUTCMinutes() >= REPORT_MINUTE;
