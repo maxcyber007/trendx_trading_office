@@ -245,16 +245,14 @@ function ChartBot({ market, positions, floating, money, ai, aiState, acc, notes 
         out.push(`24 ชั่วโมงล่าสุด ${diff >= 0 ? "+" : "-"}$${Math.abs(diff).toFixed(2)} (${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%) ${Math.abs(pct) < 0.3 ? "ราคาทรงตัว" : diff > 0 ? "แนวโน้มขึ้น" : "แนวโน้มลง"}`);
       }
     }
-    if (market?.range_3m) {
-      const r = market.range_3m;
-      out.push(`H1 RANGE 3M $${r.toFixed(2)} · ${r >= RANGE_WIDE ? "WIDE ตลาดวิ่งดี เข้ากับระบบ" : r >= RANGE_NARROW ? "WATCH ตลาดเริ่มแคบ" : "NARROW ตลาดแคบ ระวัง"}`);
-    }
-    const now = Date.now() / 1000, next = market?.news?.find((n) => n.t > now);
+    // (the H1 range is not said here: it shows under the chart)
+    const now = Date.now() / 1000;
     const hhmm = (t: number) => new Date(t * 1000).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
-    // today's important news in short: how many, then only the next one due (no line per event; the AI lines sum them up)
-    const news = market?.news ?? [];
-    out.push(news.length ? `ข่าวสำคัญวันนี้ ${news.length} รายการ` : "วันนี้ไม่มีข่าวเศรษฐกิจสำคัญ ตลาดเคลื่อนไหวตามปัจจัยทางเทคนิค");
-    if (news.length) out.push(next ? `ข่าวถัดไป ${hhmm(next.t)} ${next.name} ระวังความผันผวนช่วงประกาศ` : "ข่าวสำคัญของวันนี้ประกาศครบแล้ว");
+    // important news still to come only (released ones are dropped): how many are left, then the next one due
+    const news = market?.news ?? [], left = news.filter((n) => n.t > now).sort((a, b) => a.t - b.t);
+    if (!news.length) out.push("วันนี้ไม่มีข่าวเศรษฐกิจสำคัญ ตลาดเคลื่อนไหวตามปัจจัยทางเทคนิค");
+    if (left.length > 1) out.push(`ข่าวสำคัญรอประกาศอีก ${left.length} รายการ`);
+    if (left.length) out.push(`ข่าวถัดไป ${hhmm(left[0].t)} ${left[0].name} ระวังความผันผวนช่วงประกาศ`);
     const buys = positions.filter((p) => p.type === 0).length, sells = positions.length - buys;
     out.push(positions.length ? `ถือ ${positions.length} ไม้ · BUY ${buys} SELL ${sells} · กำไรลอย ${money(floating, true)}` : "ตอนนี้ไม่มีไม้เปิดอยู่ รอสัญญาณ");
     return out;
