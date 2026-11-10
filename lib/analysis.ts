@@ -199,7 +199,7 @@ export async function latestAnalysis(symbol: string | undefined): Promise<Analys
     await table();
     const [r] = await read<Record<string, any>>(
       `SELECT bar_time::float bar, bias, confidence, signal, results, entry, tp, sl, EXTRACT(EPOCH FROM done_at)::float at FROM market_analysis
-       WHERE symbol=$1 AND results IS NOT NULL AND done_at > now() - interval '6 hours' ORDER BY done_at DESC LIMIT 1`, [symbol]);
+       WHERE symbol=$1 AND results IS NOT NULL AND done_at > now() - interval '70 minutes' ORDER BY done_at DESC LIMIT 1`, [symbol]);
     if (!r) return null;
     const views: ModelView[] = r.results.views ?? [];
     return { bar: r.bar, bias: r.bias ?? 0, confidence: r.confidence ?? 0, signal: r.signal ?? "wait", at: r.at,
@@ -218,7 +218,7 @@ const SYSTEM = `คุณคือ TRENDX AI AGENTS ผู้วิเครา�
 - signal คือสัญญาณสำหรับแท่ง H1 ถัดไป ให้ตอบ wait เมื่อทิศไม่ชัด ตลาดแกว่งในกรอบ หรือใกล้เวลาข่าวสำคัญ
 - reason เป็นภาษาไทย 1 ประโยค ไม่เกิน 100 ตัวอักษร บอกเหตุผลหลักของ signal
 - lines เป็นภาษาไทย 2 ประโยค ประโยคละไม่เกิน 90 ตัวอักษร เรื่องระดับราคาสำคัญ ความผันผวน หรือข่าวที่ต้องระวัง
-- news เป็นภาษาไทย 1 ประโยค ไม่เกิน 120 ตัวอักษร สรุปข่าว USD วันนี้จาก todays_usd_news_bangkok_time: ข่าวที่ออกแล้วดีหรือแย่กว่าคาดการณ์ (actual เทียบ forecast) หรือข่าวสำคัญที่ยังรอออก และผลที่น่าจะเกิดกับทิศทางทองคำ (ตัวเลขสหรัฐฯ ดีกว่าคาดมักกดดันทอง แย่กว่าคาดมักหนุนทอง) ถ้าไม่มีข่าวให้บอกว่าวันนี้ไม่มีข่าวสำคัญ
+- news เป็นภาษาไทย 1 ประโยค ไม่เกิน 120 ตัวอักษร สรุปข่าว USD จาก todays_usd_news_bangkok_time โดยเน้นข่าวสำคัญที่ยังรอออก (เวลาและผลที่น่าจะเกิด) พูดถึงข่าวที่ออกแล้วเฉพาะที่ออกไม่เกิน 1 ชั่วโมงก่อน now_bangkok_time ว่าดีหรือแย่กว่าคาดการณ์ (actual เทียบ forecast) และผลที่น่าจะเกิดกับทิศทางทองคำ (ตัวเลขสหรัฐฯ ดีกว่าคาดมักกดดันทอง แย่กว่าคาดมักหนุนทอง) ถ้าไม่มีข่าวให้บอกว่าวันนี้ไม่มีข่าวสำคัญ ถ้าข่าวประกาศครบแล้วให้บอกสั้น ๆ ว่าข่าวสำคัญวันนี้ประกาศครบแล้ว
 - entry, tp, sl เป็นราคา (ตัวเลข) สำหรับ signal buy หรือ sell: entry ใกล้ current_price (ไม่ห่างเกิน avg_h1_range_usd.last_1_month) sl และ tp ตั้งจากแนวรับแนวต้านและระยะวิ่งของแท่ง H1 ในข้อมูล buy ต้อง sl < entry < tp, sell ต้อง tp < entry < sl ถ้า signal เป็น wait ให้ entry, tp, sl เป็น 0
 - ใช้เฉพาะตัวเลขจากข้อมูลที่ให้ ห้ามแต่งข้อมูลหรือข่าวเพิ่ม ห้ามพูดถึงขนาดไม้`;
 
@@ -319,6 +319,7 @@ function prompt(m: MarketIn): string {
     current_price: now[4],
     avg_h1_range_usd: { last_1_month: m.range_1m ?? null, last_3_months: m.range_3m ?? null },
     volatility_ratio_recent_vs_normal: m.vol_ratio ?? null,
+    now_bangkok_time: bkk(Date.now() / 1000),
     todays_usd_news_bangkok_time: (m.news ?? []).map((n) => ({ time: bkk(n.t), name: n.name, forecast: n.fc || null, actual: n.act || null })),
   };
   return JSON.stringify(data);
