@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { aiAccuracy, aiStatus, latestAnalysis } from "@/lib/analysis";
 import { latestNotes } from "@/lib/notes";
+import { latestCot } from "@/lib/cot";
 import { read } from "@/lib/db";
 import { onlineUsers } from "@/lib/presence";
 import { COOKIE, sessionAccount } from "@/lib/session";
@@ -51,8 +52,8 @@ export async function GET(req: NextRequest) {
     const pf = new Map(pfs.map((r) => [r.model, r.gl > 0 ? r.gp / r.gl : r.gp > 0 ? null : 0]));
     for (const r of ranking) r.pf = pf.has(r.model) ? pf.get(r.model) : 0;   // null = no losing trade yet
     const sym = state[0]?.market?.symbol;
-    const [analysis, ai_status, ai_accuracy, ai_notes] = await Promise.all([latestAnalysis(sym), aiStatus(sym), aiAccuracy(sym), latestNotes(sym)]);
-    return NextResponse.json({ online, account: acc[0], state: state[0] ?? null, last30: recent30[0], daily, monthly, ranking, dd: dd[0], marks, analysis, ai_status, ai_accuracy, ai_notes });
+    const [analysis, ai_status, ai_accuracy, ai_notes, cot] = await Promise.all([latestAnalysis(sym), aiStatus(sym), aiAccuracy(sym), latestNotes(sym), latestCot()]);
+    return NextResponse.json({ online, account: acc[0], state: state[0] ?? null, last30: recent30[0], daily, monthly, ranking, dd: dd[0], marks, analysis, ai_status, ai_accuracy, ai_notes, cot });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "database unavailable" }, { status: 503 });

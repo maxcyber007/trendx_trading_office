@@ -30,6 +30,8 @@ type Data = {
   ai_status?: { state: string; at?: number };
   ai_accuracy?: { pct: number; right: number; n: number } | null;   // buy / sell signals that called the next H1 bar right
   // light-model notes (lib/notes.ts): the 5-minute M5 read and the read ~20 minutes before an important USD release
+  // weekly CFTC positioning of hedge funds in COMEX gold (lib/cot.ts)
+  cot?: { date: string; net: number; change: number; oi: number; pct: number; index: number } | null;
   ai_notes?: { m5: { bias: number; summary: string; level: string; at: number } | null; news: { t: number; names: string[]; better: string; worse: string; watch: string; at: number } | null };
 };
 type Money = (v: number, plus?: boolean, digits?: number) => string;
@@ -209,7 +211,7 @@ const prompt = Prompt({ subsets: ["thai", "latin"], weight: ["400", "500"] });
 const BOT_FIRST = 2_500, BOT_HOLD = 6_000, BOT_GAP = 800, BOT_TYPE_MS = 35, BOT_ERASE_MS = 18, BOT_FADE_MS = 600;
 // pointing at (or touching) the robot or its bubble keeps the bubble up; after letting go it stays BOT_RELEASE longer
 const BOT_RELEASE = 1_500;
-function ChartBot({ market, positions, floating, money, ai, aiState, acc, notes }: { market: Market | null | undefined; positions: Position[]; floating: number; money: Money; ai?: Analysis | null; aiState?: Data["ai_status"]; acc?: Data["ai_accuracy"]; notes?: Data["ai_notes"] }) {
+function ChartBot({ market, positions, floating, money, ai, aiState, acc, notes, cot }: { market: Market | null | undefined; positions: Position[]; floating: number; money: Money; ai?: Analysis | null; aiState?: Data["ai_status"]; acc?: Data["ai_accuracy"]; notes?: Data["ai_notes"]; cot?: Data["cot"] }) {
   // the AI lines come first: joint signal and direction, then each model's reason and notes
   const aiLines = useMemo(() => {
     const views = ai?.views ?? [];
@@ -245,6 +247,11 @@ function ChartBot({ market, positions, floating, money, ai, aiState, acc, notes 
         out.push(`24 ชั่วโมงล่าสุด ${diff >= 0 ? "+" : "-"}$${Math.abs(diff).toFixed(2)} (${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%) ${Math.abs(pct) < 0.3 ? "ราคาทรงตัว" : diff > 0 ? "แนวโน้มขึ้น" : "แนวโน้มลง"}`);
       }
     }
+    // weekly COT: hedge funds' net position in COMEX gold, its weekly change and where it sits in its 52-week range
+    if (cot) {
+      const k = (v: number) => `${(Math.abs(v) / 1000).toFixed(1)}K`, d = cot.date.slice(8, 10) + "/" + cot.date.slice(5, 7);
+      out.push(`COT ${d}: กองทุนถือ ${cot.net >= 0 ? "Long" : "Short"} สุทธิ ${k(cot.net)} สัญญา (${cot.change >= 0 ? "+" : "-"}${k(cot.change)} จากสัปดาห์ก่อน) ${cot.change > 0 ? "แรงซื้อเพิ่ม" : cot.change < 0 ? "ลดสถานะซื้อ" : "ทรงตัว"} · ระดับ ${cot.index}% ของช่วง 52 สัปดาห์`);
+    }
     // (the H1 range is not said here: it shows under the chart)
     const now = Date.now() / 1000;
     const hhmm = (t: number) => new Date(t * 1000).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
@@ -256,7 +263,7 @@ function ChartBot({ market, positions, floating, money, ai, aiState, acc, notes 
     const buys = positions.filter((p) => p.type === 0).length, sells = positions.length - buys;
     out.push(positions.length ? `ถือ ${positions.length} ไม้ · BUY ${buys} SELL ${sells} · กำไรลอย ${money(floating, true)}` : "ตอนนี้ไม่มีไม้เปิดอยู่ รอสัญญาณ");
     return out;
-  }, [market, positions, floating, money, aiLines]);
+  }, [market, positions, floating, money, aiLines, cot]);
   const [shown, setShown] = useState(-1);   // how many lines have been said so far (picks the line), -1 = bubble hidden
   const [erasing, setErasing] = useState(false);
   const said = useRef(0);
@@ -482,7 +489,7 @@ export default function Dashboard() {
 
         <div className="center">
           <NeuralCore states={states} side={side} />
-          <ChartBot market={state?.market} positions={positions} floating={floating} money={money} ai={data.analysis} aiState={data.ai_status} acc={data.ai_accuracy} notes={data.ai_notes} />
+          <ChartBot market={state?.market} positions={positions} floating={floating} money={money} ai={data.analysis} aiState={data.ai_status} acc={data.ai_accuracy} notes={data.ai_notes} cot={data.cot} />
         </div>
 
         <div className="right">

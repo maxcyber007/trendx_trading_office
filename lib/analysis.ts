@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { z } from "zod";
+import { latestCot, type Cot } from "./cot";
 import { db, read } from "./db";
 
 // 10 minutes before each H1 bar closes (minute 50, 06:00-23:00 Thailand time) the web asks the AI models, side by side, for a
@@ -96,7 +97,8 @@ export async function analyzeIfDue(m: MarketIn | null | undefined): Promise<void
     hold(m.symbol, bar, RETRY_MINUTES * 60_000);
     try {
       // all models at once; one that fails is left out and the others still speak
-      const got = await Promise.allSettled(MODELS.map((model) => ask(model, m)));
+      const cot = await latestCot();   // weekly COMEX positioning, background for the models
+      const got = await Promise.allSettled(MODELS.map((model) => ask(model, m, cot)));
       const views = got.flatMap((g) => (g.status === "fulfilled" ? [g.value] : []));
       const failed = MODELS.filter((_, i) => got[i].status === "rejected");
       got.forEach((g, i) => g.status === "rejected" && console.error("market analysis", MODELS[i], String(g.reason)));
@@ -220,6 +222,7 @@ const SYSTEM = `คุณคือ TRENDX AI AGENTS ผู้วิเครา�
 - lines เป็นภาษาไทย 2 ประโยค ประโยคละไม่เกิน 90 ตัวอักษร เรื่องระดับราคาสำคัญ ความผันผวน หรือข่าวที่ต้องระวัง
 - news เป็นภาษาไทย 1 ประโยค ไม่เกิน 120 ตัวอักษร สรุปข่าว USD จาก todays_usd_news_bangkok_time โดยเน้นข่าวสำคัญที่ยังรอออก (เวลาและผลที่น่าจะเกิด) พูดถึงข่าวที่ออกแล้วเฉพาะที่ออกไม่เกิน 1 ชั่วโมงก่อน now_bangkok_time ว่าดีหรือแย่กว่าคาดการณ์ (actual เทียบ forecast) และผลที่น่าจะเกิดกับทิศทางทองคำ (ตัวเลขสหรัฐฯ ดีกว่าคาดมักกดดันทอง แย่กว่าคาดมักหนุนทอง) ถ้าไม่มีข่าวให้บอกว่าวันนี้ไม่มีข่าวสำคัญ ถ้าข่าวประกาศครบแล้วให้บอกสั้น ๆ ว่าข่าวสำคัญวันนี้ประกาศครบแล้ว
 - entry, tp, sl เป็นราคา (ตัวเลข) สำหรับ signal buy หรือ sell: entry ใกล้ current_price (ไม่ห่างเกิน avg_h1_range_usd.last_1_month) sl และ tp ตั้งจากแนวรับแนวต้านและระยะวิ่งของแท่ง H1 ในข้อมูล buy ต้อง sl < entry < tp, sell ต้อง tp < entry < sl ถ้า signal เป็น wait ให้ entry, tp, sl เป็น 0
+- cftc_cot_gold_managed_money_weekly คือสถานะสุทธิของกองทุนใน Gold Futures รายสัปดาห์ ใช้เป็นภาพรวมระยะกลางประกอบ bias เท่านั้น ห้ามใช้เป็นเหตุผลหลักของ signal รายชั่วโมง
 - ใช้เฉพาะตัวเลขจากข้อมูลที่ให้ ห้ามแต่งข้อมูลหรือข่าวเพิ่ม ห้ามพูดถึงขนาดไม้`;
 
 // the reply every model gives; Claude is held to it by structured output, Ollama by the prompt and JSON mode
@@ -296,8 +299,8 @@ async function askOllama(model: string, user: string): Promise<unknown> {
   return JSON.parse(String(body?.message?.content ?? "").replace(/^```(?:json)?\s*|\s*```$/g, ""));
 }
 
-async function ask(model: string, m: MarketIn): Promise<ModelView> {
-  const user = prompt(m);
+async function ask(model: string, m: MarketIn, cot: Cot | null = null): Promise<ModelView> {
+  const user = prompt(m, cot);
   try {
     return await askOnce(model, user, TIMEOUT_MS);
   } catch (e) {
@@ -308,7 +311,7 @@ async function ask(model: string, m: MarketIn): Promise<ModelView> {
 }
 
 // the market data every model gets, as the user message
-function prompt(m: MarketIn): string {
+function prompt(m: MarketIn, cot: Cot | null = null): string {
   const closed = m.candles.slice(0, -1), now = m.candles[m.candles.length - 1];   // the newest candle is still open
   const bkk = (t: number) => new Date(t * 1000).toLocaleString("en-GB", { timeZone: "Asia/Bangkok", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
   const data = {
@@ -320,6 +323,8 @@ function prompt(m: MarketIn): string {
     avg_h1_range_usd: { last_1_month: m.range_1m ?? null, last_3_months: m.range_3m ?? null },
     volatility_ratio_recent_vs_normal: m.vol_ratio ?? null,
     now_bangkok_time: bkk(Date.now() / 1000),
+    cftc_cot_gold_managed_money_weekly: cot ? { report_date: cot.date, net_long_contracts: cot.net, change_from_previous_week: cot.change,
+      net_as_pct_of_open_interest: cot.pct, position_in_52_week_range_0_to_100: cot.index } : null,
     todays_usd_news_bangkok_time: (m.news ?? []).map((n) => ({ time: bkk(n.t), name: n.name, forecast: n.fc || null, actual: n.act || null })),
   };
   return JSON.stringify(data);

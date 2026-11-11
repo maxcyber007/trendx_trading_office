@@ -88,3 +88,15 @@ CREATE TABLE IF NOT EXISTS market_analysis (
   trade_r     DOUBLE PRECISION,            -- result in R (1 R = the stop distance)
   PRIMARY KEY (symbol, bar_time)
 );
+
+-- weekly CFTC Commitments of Traders, COMEX gold (088691), Managed Money group; the web app fills it from the CFTC public API
+CREATE TABLE IF NOT EXISTS cot_gold (
+  report_date  DATE PRIMARY KEY,             -- positions as of this Tuesday
+  mm_long      INT NOT NULL,
+  mm_short     INT NOT NULL,
+  mm_long_chg  INT,                          -- change from the previous report
+  mm_short_chg INT,
+  oi           INT,                          -- total open interest
+  oi_chg       INT,
+  fetched_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);

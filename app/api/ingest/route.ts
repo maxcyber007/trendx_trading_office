@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { after, NextRequest, NextResponse } from "next/server";
 import { analyzeIfDue, scoreSignals } from "@/lib/analysis";
 import { notesIfDue } from "@/lib/notes";
+import { refreshCot } from "@/lib/cot";
 import { db } from "@/lib/db";
 
 // the hourly market commentary runs after the response, inside this function's time limit (a slow model plus its fallback)
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
     await c.query("COMMIT");
     // score finished signals against the closed bars first (one quick query), then the hourly commentary and the
     // 5-minute / pre-news notes when they are due, side by side
-    if (body.market) after(async () => { await scoreSignals(body.market); await Promise.all([analyzeIfDue(body.market), notesIfDue(body.market)]); });
+    if (body.market) after(async () => { await scoreSignals(body.market); await Promise.all([analyzeIfDue(body.market), notesIfDue(body.market), refreshCot()]); });
     return NextResponse.json({ ok: true, deals: body.deals?.length ?? 0 });
   } catch (e) {
     await c.query("ROLLBACK");
