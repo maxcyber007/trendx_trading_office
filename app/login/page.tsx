@@ -50,7 +50,7 @@ export default function Login() {
         <p className="product">ULTIMATE AI PRO</p>
         <p className="tagline">Smart Trading &bull; Smarter Decisions</p>
         <label htmlFor="login">Account Number</label>
-        <input id="login" inputMode="numeric" autoComplete="username" placeholder="Enter your account number" value={login} onChange={(e) => { setLogin(e.target.value.replace(/\D/g, "")); setServers([]); setServer(""); }} aria-invalid={!!error} autoFocus required />
+        <input id="login" autoComplete="username" autoCapitalize="characters" spellCheck={false} placeholder="Enter your account number" value={login} onChange={(e) => { setLogin(e.target.value.replace(/[^0-9a-z]/gi, "").toUpperCase()); setServers([]); setServer(""); }} aria-invalid={!!error} autoFocus required />
         {servers.length > 1 && <>
           <label className="second" htmlFor="server">Server</label>
           <select id="server" value={server} onChange={(e) => setServer(e.target.value)}>{servers.map((s) => <option key={s}>{s}</option>)}</select>
