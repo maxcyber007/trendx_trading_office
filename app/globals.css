@@ -314,6 +314,13 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 .gate input, .gate select { height: 46px; padding: 0 14px; border-color: rgba(57, 255, 106, .42); border-radius: 10px; background: rgba(2, 10, 6, .82); font: 500 16px var(--font-text), "Segoe UI", sans-serif; transition: border-color .2s, box-shadow .2s; }
 .gate input::placeholder { color: #6f9179; }
 .gate input:focus, .gate select:focus { outline: none; border-color: var(--neon); box-shadow: 0 0 0 3px rgba(57, 255, 106, .2), 0 0 18px rgba(57, 255, 106, .35); }
+.gate .saved { justify-self: stretch; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.gate .saved span { display: inline-flex; align-items: center; border: 1px solid rgba(57, 255, 106, .3); border-radius: 999px; background: rgba(2, 10, 6, .7); transition: border-color .2s, box-shadow .2s; }
+.gate .saved span.on { border-color: var(--neon); box-shadow: 0 0 10px rgba(57, 255, 106, .35); }
+.gate .saved button { width: auto; height: 28px; margin: 0; padding: 0 4px 0 11px; border-radius: 999px; color: #c9e8d3; background: none; box-shadow: none; animation: none; font: 500 13px var(--font-text), "Segoe UI", sans-serif; letter-spacing: .02em; text-transform: none; }
+.gate .saved button.drop { padding: 0 10px 0 4px; color: #6f9179; font-size: 16px; line-height: 1; }
+.gate .saved button:hover:not(:disabled) { transform: none; box-shadow: none; color: #f2fff6; }
+.gate .saved button.drop:hover:not(:disabled) { color: #ff7a87; }
 .fail { justify-self: start; margin-top: 8px; color: #ff7a87; font-size: 14px; font-weight: 500; }
 .gate button { position: relative; width: 100%; height: 48px; margin-top: 16px; overflow: hidden; border: 0; border-radius: 10px; color: #03140a; background: linear-gradient(90deg, #00c853, var(--neon), #00c853) 0 0 / 200% 100%; font: 800 14px var(--font-display), "Segoe UI", sans-serif; letter-spacing: .14em; text-transform: uppercase; box-shadow: 0 0 20px rgba(57, 255, 106, .45); transition: box-shadow .2s, transform .2s; animation: sweep 3.2s linear infinite; }
 .gate button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 30px rgba(57, 255, 106, .75); }
