@@ -36,6 +36,9 @@ select, input { background: var(--card); color: var(--text); border: 1px solid v
 .ai { margin-left: auto; width: 52px; height: 46px; display: grid; place-items: center; color: var(--neon); } .ai svg { width: 46px; height: 46px; }
 .row4 { display: grid; grid-template-columns: 1.95fr 1fr 1fr 1fr; gap: 6px; }
 .row3 { display: grid; grid-template-columns: 1.7fr 1.3fr 1.3fr; gap: 6px; }
+.row2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.risk strong small { font-size: 12px; font-weight: 600; } .risk > small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.meter span.yel { background: var(--yellow); } .meter span.neg { background: var(--red); }
 .stat { display: flex; flex-direction: column; gap: 1px; }
 .stat strong { font-size: 15px; font-weight: 700; color: var(--text); }
 .stat small { white-space: nowrap; font-size: 10px; }
@@ -169,6 +172,7 @@ td { padding: 2px 4px; white-space: nowrap; }
 body::before { content: ""; position: fixed; inset: -80px; z-index: -1; pointer-events: none; background-image: radial-gradient(circle at 50% 42%, rgba(0, 200, 83, .13), transparent 42%), linear-gradient(rgba(57, 255, 106, .035) 1px, transparent 1px), linear-gradient(90deg, rgba(57, 255, 106, .035) 1px, transparent 1px); background-size: auto, 44px 44px, 44px 44px; animation: gridDrift 18s linear infinite; }
 .brand, .row4 > *, .row3 > *, .chip, .left > .card, .right > .card { animation: cardIn .65s cubic-bezier(.2, .8, .2, 1) backwards; }
 .row4 > :nth-child(2), .chip:nth-child(2) { animation-delay: .06s; } .row4 > :nth-child(3), .chip:nth-child(3) { animation-delay: .12s; } .row4 > :nth-child(4), .chip:nth-child(4) { animation-delay: .18s; }
+.row2 > * { animation: cardIn .65s cubic-bezier(.2, .8, .2, 1) .36s backwards; }
 .row3 > :nth-child(1) { animation-delay: .2s; } .row3 > :nth-child(2) { animation-delay: .26s; } .row3 > :nth-child(3) { animation-delay: .32s; }
 .left > .card:nth-of-type(1) { animation-delay: .36s; } .left > .card:nth-of-type(2) { animation-delay: .44s; } .left > .card:nth-of-type(3) { animation-delay: .52s; }
 .right > .card:nth-child(1) { animation-delay: .1s; } .right > .card:nth-child(2) { animation-delay: .2s; } .right > .card:nth-child(3) { animation-delay: .3s; } .right > .card:nth-child(4) { animation-delay: .4s; } .right > .card:nth-child(5) { animation-delay: .5s; }
@@ -416,6 +420,7 @@ h2 .ico { animation: iconPulse 2.6s ease-in-out infinite; }
 @media (max-width: 560px) {
   .row4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .run, .row4 > :last-child { grid-column: 1 / -1; }
   .row3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .trades { grid-column: 1 / -1; }
+  .row2 { grid-template-columns: minmax(0, 1fr); }
   .chips { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .brand h1 { font-size: 20px; } .ai { display: none; }
   .day b { font-size: 9px; }

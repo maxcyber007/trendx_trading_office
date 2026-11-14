@@ -32,6 +32,9 @@ type Data = {
   // light-model notes (lib/notes.ts): the 5-minute M5 read and the read ~20 minutes before an important USD release
   // weekly CFTC positioning of hedge funds in COMEX gold (lib/cot.ts)
   cot?: { date: string; net: number; change: number; oi: number; pct: number; index: number } | null;
+  // prop-firm loss limits on the whole account (app/api/dashboard): today's closed P/L since the reset, the worst day and
+  // the lowest point ever seen in deals and 5-minute equity samples
+  risk?: { daily_pct: number; max_pct: number; reset: number; initial: number; today: number; worst_day: number; worst_day_d: string | null; worst_max: number; worst_max_d: string | null } | null;
   ai_notes?: { m5: { bias: number; summary: string; level: string; at: number } | null; news: { t: number; names: string[]; better: string; worse: string; watch: string; at: number } | null };
 };
 type Money = (v: number, plus?: boolean, digits?: number) => string;
@@ -199,6 +202,20 @@ function NewsPanel({ news, filter }: { news: News[] | undefined; filter?: boolea
 
 function Meter({ label, value, pct, color = "" }: { label: string; value: string; pct: number; color?: string }) {
   return <div className="meter2"><div><small>{label}</small><b>{value}</b></div><i><span className={color} style={{ width: `${Math.min(100, Math.max(1, pct))}%` }} /></i></div>;
+}
+
+// loss against a prop-firm limit: green under half the limit, yellow under 80%, red above
+function RiskCard({ title, loss, limitPct, initial, worst, worstD, sub, money }: { title: string; loss: number; limitPct: number; initial: number; worst: number; worstD: string | null; sub: string; money: Money }) {
+  const pct = initial > 0 ? (loss / initial) * 100 : 0, worstPct = initial > 0 ? (worst / initial) * 100 : 0, use = limitPct > 0 ? pct / limitPct : 0;
+  const tone = use < 0.5 ? "pos" : use < 0.8 ? "yel" : "neg", day = (d: string | null) => (d ? d.slice(8, 10) + "/" + d.slice(5, 7) + "/" + d.slice(2, 4) : "");
+  return (
+    <section className="card dd risk" title={`${title}: limit ${limitPct}% of ${money(initial)} = ${money((initial * limitPct) / 100)}`}>
+      <header><h3>{title}</h3><small>limit {limitPct}% &nbsp;{money((initial * limitPct) / 100)}</small></header>
+      <strong className={tone}>{loss > 0 ? "-" : ""}{money(loss)} <small className={tone}>{pct.toFixed(2)}%</small></strong>
+      <div className="meter"><span className={tone} style={{ width: `${Math.min(100, use * 100)}%` }} /></div>
+      <small>{sub} &nbsp;<span className={worstPct >= limitPct ? "neg" : ""}>Worst -{money(worst)} ({worstPct.toFixed(2)}%) {day(worstD)}</span></small>
+    </section>
+  );
 }
 
 const BEAT = "l3-3 3 3h4l2 4 3-13 3 13 2-4h5l4-3 4 3H";
@@ -432,6 +449,8 @@ export default function Dashboard() {
   // drawdown figures come from the EA, which tracks them from the whole trade history; the web samples are the fallback
   const peak = ea?.dd?.peak || data.dd.peak, ddNow = Math.max(0, peak - equity), ddPct = peak > 0 ? (ddNow / peak) * 100 : 0;
   const ddMaxPct = Math.max(ea?.dd?.max_pct ?? data.dd.dd * 100, ddPct), ddMax = Math.max(ea?.dd?.max ?? data.dd.amount, ddNow);
+  // FTMO-style: today's loss = closed P/L since the reset plus floating, max loss = initial capital minus equity
+  const risk = data.risk, dayLoss = risk ? Math.max(0, -(risk.today + equity - balance)) : 0, maxLoss = risk ? Math.max(0, risk.initial - equity) : 0;
   const ratio = state?.market?.vol_ratio ?? 1;
   const regime = ratio > 1.3 ? "High Vol" : ratio < 0.7 ? "Low Vol" : "Normal";
   const side = Math.sign(positions.reduce((s, p) => s + (p.type === 0 ? p.volume : -p.volume), 0));
@@ -465,6 +484,13 @@ export default function Dashboard() {
               <div className="meter"><span style={{ width: `${ddMaxPct > 0 ? (ddPct / ddMaxPct) * 100 : 0}%` }} /></div><small>Max {ddMaxPct.toFixed(1)}% &nbsp;{money(ddMax)}</small></section>
             <section className="card dd"><header><h3>Daily P/L</h3><small>30D</small></header><strong className={sign(dayPl)}>{money(dayPl, true)}</strong><Spark daily={data.daily} /></section>
           </div>
+
+          {risk && risk.initial > 0 && <div className="row2">
+            <RiskCard title="Daily Loss" loss={dayLoss} limitPct={risk.daily_pct} initial={risk.initial} worst={Math.max(risk.worst_day, dayLoss)} worstD={dayLoss > risk.worst_day ? today ?? null : risk.worst_day_d}
+              sub={`reset ${String(risk.reset).padStart(2, "0")}:00`} money={money} />
+            <RiskCard title="Max Loss" loss={maxLoss} limitPct={risk.max_pct} initial={risk.initial} worst={Math.max(risk.worst_max, maxLoss)} worstD={maxLoss > risk.worst_max ? today ?? null : risk.worst_max_d}
+              sub={`start ${money(risk.initial, false, 0)}`} money={money} />
+          </div>}
 
           <div className="chips">
             <div className="chip"><Signal /><span><small>Regime</small><b>{regime}</b></span></div>
