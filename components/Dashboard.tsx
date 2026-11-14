@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Prompt } from "next/font/google";
 import { MODEL_NAMES, modelCode } from "@/lib/models";
 import NeuralCore from "./NeuralCore";
-import { AiChip, Bars, Calendar as CalIcon, ChartSmall, ChartUp, Code, ExtLink, Clock, Coins, Expand, Eye, Layers, Logo, Logout, Neural, Person, Power, Pulse, Shield, Shrink, Signal, Trophy } from "./icons";
+import { AiChip, Bars, Calendar as CalIcon, ChartSmall, ChartUp, Code, ExtLink, Clock, Coins, Expand, Eye, Layers, Logo, Logout, Neural, Person, Power, Shield, Shrink, Signal, Trophy } from "./icons";
 
 type Account = { id: string; login: string; server: string; company: string; currency: string; is_demo: boolean; name: string | null };
 type Position = { ticket: number; symbol: string; type: number; magic: number; volume: number; open_price: number; profit: number };
@@ -200,10 +200,6 @@ function NewsPanel({ news, filter }: { news: News[] | undefined; filter?: boolea
   );
 }
 
-function Meter({ label, value, pct, color = "" }: { label: string; value: string; pct: number; color?: string }) {
-  return <div className="meter2"><div><small>{label}</small><b>{value}</b></div><i><span className={color} style={{ width: `${Math.min(100, Math.max(1, pct))}%` }} /></i></div>;
-}
-
 // loss against a prop-firm limit: green under half the limit, yellow under 80%, red above
 function RiskCard({ title, loss, limitPct, initial, worst, worstD, sub, money }: { title: string; loss: number; limitPct: number; initial: number; worst: number; worstD: string | null; sub: string; money: Money }) {
   const pct = initial > 0 ? (loss / initial) * 100 : 0, worstPct = initial > 0 ? (worst / initial) * 100 : 0, use = limitPct > 0 ? pct / limitPct : 0;
@@ -217,8 +213,6 @@ function RiskCard({ title, loss, limitPct, initial, worst, worstD, sub, money }:
     </section>
   );
 }
-
-const BEAT = "l3-3 3 3h4l2 4 3-13 3 13 2-4h5l4-3 4 3H";
 
 // the robot's speech bubble uses Prompt (Thai and Latin)
 const prompt = Prompt({ subsets: ["thai", "latin"], weight: ["400", "500"] });
@@ -362,23 +356,6 @@ function ChartBot({ market, positions, floating, money, ai, aiState, acc, notes,
   );
 }
 
-function Monitor({ sys, alive }: { sys?: Sys; alive: boolean }) {
-  return (
-    <section className="card">
-      <header><h2><Pulse /> SYSTEM MONITOR</h2>
-        {alive && <svg className="ecg" viewBox="0 0 80 18" preserveAspectRatio="xMinYMid slice" aria-hidden="true"><g><path d={`M0 10H22${BEAT}80H102${BEAT}160`} /></g></svg>}
-        <span className={`pill ${sys?.anim ? "" : "off"}`}>ANIMATION {sys?.anim ? "ON" : "OFF"}</span></header>
-      {sys ? <>
-        <Meter label={`DASHBOARD CPU  (1 core / all ${sys.cores})`} value={`${sys.cpu.toFixed(1)}%  /  ${(sys.cpu / Math.max(1, sys.cores)).toFixed(2)}%`} pct={sys.cpu} />
-        <Meter label="FRAME TIME  (avg / peak)" value={`${sys.frame.toFixed(1)} / ${sys.peak.toFixed(1)} ms`} pct={sys.frame} />
-        <Meter label={`TERMINAL RAM  (of ${(sys.ram_mb / 1024).toFixed(1)} GB)`} value={`${sys.term_mb} MB  ${((sys.term_mb / Math.max(1, sys.ram_mb)) * 100).toFixed(1)}%`} pct={(sys.term_mb / Math.max(1, sys.ram_mb)) * 100} />
-        <Meter label="AI MEMORY" value={`${sys.ea_mb} MB`} pct={(sys.ea_mb / Math.max(1, sys.term_mb)) * 100} color="cy" />
-        <p className="note">{sys.fps.toFixed(1)} fps &nbsp; neural bg &nbsp; chart redraw not included</p>
-      </> : <p className="none">อัปเดต EA V.1.39.1 เพื่อแสดงข้อมูลนี้</p>}
-    </section>
-  );
-}
-
 export default function Dashboard() {
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState("");
@@ -485,13 +462,6 @@ export default function Dashboard() {
             <section className="card dd"><header><h3>Daily P/L</h3><small>30D</small></header><strong className={sign(dayPl)}>{money(dayPl, true)}</strong><Spark daily={data.daily} /></section>
           </div>
 
-          {risk && risk.initial > 0 && <div className="row2">
-            <RiskCard title="Daily Loss" loss={dayLoss} limitPct={risk.daily_pct} initial={risk.initial} worst={Math.max(risk.worst_day, dayLoss)} worstD={dayLoss > risk.worst_day ? today ?? null : risk.worst_day_d}
-              sub={`reset ${String(risk.reset).padStart(2, "0")}:00`} money={money} />
-            <RiskCard title="Max Loss" loss={maxLoss} limitPct={risk.max_pct} initial={risk.initial} worst={Math.max(risk.worst_max, maxLoss)} worstD={maxLoss > risk.worst_max ? today ?? null : risk.worst_max_d}
-              sub={`start ${money(risk.initial, false, 0)}`} money={money} />
-          </div>}
-
           <div className="chips">
             <div className="chip"><Signal /><span><small>Regime</small><b>{regime}</b></span></div>
             <div className="chip"><Neural /><span><small>AI Model</small><b>Active {MODEL_NAMES.length - paused}/{MODEL_NAMES.length}</b></span></div>
@@ -534,7 +504,12 @@ export default function Dashboard() {
           </section>
           <Live market={state?.market} marks={data.marks ?? []} />
           <NewsPanel news={state?.market?.news} filter={ea?.news_filter} />
-          <Monitor sys={ea?.sys} alive={eaOn} />
+          {risk && risk.initial > 0 && <div className="row2">
+            <RiskCard title="Daily Loss" loss={dayLoss} limitPct={risk.daily_pct} initial={risk.initial} worst={Math.max(risk.worst_day, dayLoss)} worstD={dayLoss > risk.worst_day ? today ?? null : risk.worst_day_d}
+              sub={`reset ${String(risk.reset).padStart(2, "0")}:00`} money={money} />
+            <RiskCard title="Max Loss" loss={maxLoss} limitPct={risk.max_pct} initial={risk.initial} worst={Math.max(risk.worst_max, maxLoss)} worstD={maxLoss > risk.worst_max ? today ?? null : risk.worst_max_d}
+              sub={`start ${money(risk.initial, false, 0)}`} money={money} />
+          </div>}
           <section className="card dev"><span className="avatar"><Person /></span><div className="acctinfo">
             <small><em>Login :</em> {account.login}{account.is_demo ? " (Demo)" : ""}</small>
             <b title={account.company}><em>Broker :</em> {account.company || "-"}</b>
